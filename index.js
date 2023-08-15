@@ -15,7 +15,7 @@ app.use(express.json());
 
 
 // Data-Base start
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.MONGODB_USER_NAME}:${process.env.MONGODB_PASSWORD}@book-verse.uifvr5z.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -52,6 +52,24 @@ async function run() {
 
     })
    // get all books  end
+
+
+
+    // get single book by id  start
+
+    app.get('/singleBook/:id',async(req,res)=>{
+
+         const id = req.params.id
+
+         const find={_id : new ObjectId(id)}
+
+         const result =await allBooksCollections.findOne(find)
+         
+         res.send(result)
+
+
+    })
+   // get single book id  end
 
 
 
