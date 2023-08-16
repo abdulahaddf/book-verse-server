@@ -10,10 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 
-
-
-
-
 // Data-Base start
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.MONGODB_USER_NAME}:${process.env.MONGODB_PASSWORD}@book-verse.uifvr5z.mongodb.net/?retryWrites=true&w=majority`;
@@ -34,6 +30,7 @@ async function run() {
 
     const database = client.db("bookVerse");
     const allBooksCollections = database.collection("allBooks");
+    const usersCollection = database.collection("users");
  
 
 
@@ -71,7 +68,25 @@ async function run() {
     })
    // get single book id  end
 
+//user related api
+app.get("/users", async (req, res) => {
+  const result = await usersCollection.find().toArray();
+  res.send(result);
+});
 
+app.post("/users", async (req, res) => {
+  const user = req.body;
+  console.log(user);
+  const query = { email: user.email };
+  const existingUser = await usersCollection.findOne(query);
+
+  if (existingUser) {
+    return res.send({ message: "user exists" });
+  }
+
+  const result = await usersCollection.insertOne(user);
+  res.send(result);
+});
 
 
 
