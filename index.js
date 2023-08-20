@@ -10,12 +10,11 @@ const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 app.use(cors());
 app.use(express.json());
 
-
 // Data-Base start
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.MONGODB_USER_NAME}:${process.env.MONGODB_PASSWORD}@book-verse.uifvr5z.mongodb.net/?retryWrites=true&w=majority`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version--------
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -40,58 +39,54 @@ async function run() {
 
     // get all books  start
 
-    app.get('/allBooks',async(req,res)=>{
+    app.get("/allBooks", async (req, res) => {
+      const result = await allBooksCollections.find().toArray();
 
-      
-
-         const result=await allBooksCollections.find().toArray()
-         
-         res.send(result)
-
-
-    })
-   // get all books  end
-
-
+      res.send(result);
+    });
+    // get all books  end
 
     // get single book by id  start
 
-    app.get('/singleBook/:id',async(req,res)=>{
+    app.get("/singleBook/:id", async (req, res) => {
+      const id = req.params.id;
 
-         const id = req.params.id
+      const find = { _id: new ObjectId(id) };
 
-         const find={_id : new ObjectId(id)}
+      const result = await allBooksCollections.findOne(find);
 
-         const result =await allBooksCollections.findOne(find)
-         
-         res.send(result)
+      res.send(result);
+    });
+    // get single book id  end
 
+    //user related api
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
-    })
-   // get single book id  end
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
 
-//user related api
-app.get("/users", async (req, res) => {
-  const result = await usersCollection.find().toArray();
-  res.send(result);
-});
+      if (existingUser) {
+        return res.send({ message: "user exists" });
+      }
 
-app.post("/users", async (req, res) => {
-  const user = req.body;
-  console.log(user);
-  const query = { email: user.email };
-  const existingUser = await usersCollection.findOne(query);
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
-  if (existingUser) {
-    return res.send({ message: "user exists" });
-  }
-
-  const result = await usersCollection.insertOne(user);
-  res.send(result);
-});
-
-
-
+    //------------------ Post method start------------------
+    app.post("/allBooks", async (req, res) => {
+      const newBook = req.body;
+      console.log(newBook);
+      const result = await allBooksCollections.insertOne(newBook);
+      res.send(result);
+    });
+    //------------------ Post method end------------------
 
 
  // payment intent
@@ -123,7 +118,9 @@ app.post('/payments', async (req, res) => {
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -131,15 +128,6 @@ app.post('/payments', async (req, res) => {
 }
 run().catch(console.dir);
 // Data-Base end
-
-
-
-
-
-
-
-
-
 
 app.get("/", (req, res) => {
   res.send("Book Verse server is running");
