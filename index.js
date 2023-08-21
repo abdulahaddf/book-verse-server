@@ -91,6 +91,15 @@ async function run() {
     });
     //------------------ Post method end------------------
 
+    //------------------ Delete method start------------------
+     app.delete("/allBooks/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await allBooksCollections.deleteOne(query);
+      res.send(result);
+    });
+    //------------------ Delete method end------------------
+
 
  // payment intent
  app.post('/create-payment-intent', async (req, res) => {
