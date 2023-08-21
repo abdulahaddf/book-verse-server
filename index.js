@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 
 // middleware
 app.use(cors());
@@ -19,7 +20,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  },
+  }   
 });
 
 async function run() {
@@ -30,17 +31,23 @@ async function run() {
     const database = client.db("bookVerse");
     const allBooksCollections = database.collection("allBooks");
     const usersCollection = database.collection("users");
+    const paymentCollection = database.collection("payments");
+    const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
+ 
 
-    // get all books  start
+
+
+
+    // get all books  start by Tonmoy
 
     app.get("/allBooks", async (req, res) => {
       const result = await allBooksCollections.find().toArray();
 
       res.send(result);
     });
-    // get all books  end
+    // get all books  end by Tonmoy
 
-    // get single book by id  start
+    // get single book by id  start by Tonmoy
 
     app.get("/singleBook/:id", async (req, res) => {
       const id = req.params.id;
@@ -51,7 +58,7 @@ async function run() {
 
       res.send(result);
     });
-    // get single book id  end
+    // get single book id  end by Tonmoy
 
     //user related api
     app.get("/users", async (req, res) => {
@@ -83,6 +90,122 @@ async function run() {
       res.send(result);
     });
     //------------------ Post method end------------------
+
+
+ // payment intent
+ app.post('/create-payment-intent', async (req, res) => {
+  try {
+    const { price } = req.body;
+    if (!price) {
+      return res.status(400).json({ error: 'Missing price in request body' });
+    }
+
+    // Convert the price to a whole number in cents
+    const amount = Math.round(parseFloat(price) * 100);
+
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid price' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      payment_method_types: ['card'],
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: 'An error occurred while creating the payment intent' });
+  }
+});
+
+
+// payment related api
+app.post('/payments', async (req, res) => {
+  const payment = req.body
+  console.log('pay',payment);
+  const result = await paymentCollection.insertOne(payment)
+  console.log('res',result);
+  res.send(result)
+})
+
+
+// post  best selling & recent selling start by tonmoy
+
+app.post('/bestSellingAndRecentSelling', async (req, res) => {
+  try {
+    const booksData = req.body;
+
+    const { previous_id, count = count || 1, purchase_date } = booksData;
+
+    let result;
+
+    const existingBook = await bestSellingAndRecentSelling.findOne({ previous_id });
+
+    if (existingBook) {
+      const totalCount = existingBook.count + count;
+
+      result = await bestSellingAndRecentSelling.updateOne(
+        { previous_id },
+        {
+          $set: {
+            count: totalCount,
+            purchase_date
+          }
+        }
+      );
+    } else {
+      const newData = { ...booksData, count: count, purchase_date: purchase_date };
+      result = await bestSellingAndRecentSelling.insertOne(newData);
+    }
+
+    console.log('Database update result:', result);
+
+    res.status(200).json({ message: 'Data updated successfully' });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+});
+
+
+
+// post  best selling & recent selling end by Tonmoy
+
+
+//  get best selling data  start by Tonmoy
+
+app.get('/bestSelling',async(req,res)=>{
+
+
+  const result= await bestSellingAndRecentSelling.find().sort({count: -1}).toArray();
+
+    res.send(result)
+
+})
+
+
+//  get best selling data  end by  Tonmoy
+
+
+//  get recent selling data  start by Tonmoy
+
+app.get('/recentSelling',async(req,res)=>{
+
+
+  const result= await bestSellingAndRecentSelling.find().sort({purchase_date: -1}).toArray();
+
+    res.send(result)
+
+})
+
+
+//  get recent selling data  end by  Tonmoy
+
+
 
 
 
