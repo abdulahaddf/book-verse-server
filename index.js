@@ -32,21 +32,22 @@ async function run() {
     const allBooksCollections = database.collection("allBooks");
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
+    const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
  
 
 
 
 
-    // get all books  start
+    // get all books  start by Tonmoy
 
     app.get("/allBooks", async (req, res) => {
       const result = await allBooksCollections.find().toArray();
 
       res.send(result);
     });
-    // get all books  end
+    // get all books  end by Tonmoy
 
-    // get single book by id  start
+    // get single book by id  start by Tonmoy
 
     app.get("/singleBook/:id", async (req, res) => {
       const id = req.params.id;
@@ -57,7 +58,7 @@ async function run() {
 
       res.send(result);
     });
-    // get single book id  end
+    // get single book id  end by Tonmoy
 
     //user related api
     app.get("/users", async (req, res) => {
@@ -114,6 +115,80 @@ app.post('/payments', async (req, res) => {
   console.log('res',result);
   res.send(result)
 })
+
+
+// post  best selling & recent selling start by tonmoy
+
+app.post('/bestSellingAndRecentSelling', async (req, res) => {
+  try {
+    const booksData = req.body;
+
+    const { previous_id, count = count || 1, purchase_date } = booksData;
+
+    let result;
+
+    const existingBook = await bestSellingAndRecentSelling.findOne({ previous_id });
+
+    if (existingBook) {
+      const totalCount = existingBook.count + count;
+
+      result = await bestSellingAndRecentSelling.updateOne(
+        { previous_id },
+        {
+          $set: {
+            count: totalCount,
+            purchase_date
+          }
+        }
+      );
+    } else {
+      const newData = { ...booksData, count: count, purchase_date: purchase_date };
+      result = await bestSellingAndRecentSelling.insertOne(newData);
+    }
+
+    console.log('Database update result:', result);
+
+    res.status(200).json({ message: 'Data updated successfully' });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+});
+
+
+
+// post  best selling & recent selling end by Tonmoy
+
+
+//  get best selling data  start by Tonmoy
+
+app.get('/bestSelling',async(req,res)=>{
+
+
+  const result= await bestSellingAndRecentSelling.find().sort({count: -1}).toArray();
+
+    res.send(result)
+
+})
+
+
+//  get best selling data  end by  Tonmoy
+
+
+//  get recent selling data  start by Tonmoy
+
+app.get('/recentSelling',async(req,res)=>{
+
+
+  const result= await bestSellingAndRecentSelling.find().sort({purchase_date: -1}).toArray();
+
+    res.send(result)
+
+})
+
+
+//  get recent selling data  end by  Tonmoy
+
 
 
     // Send a ping to confirm a successful connection
