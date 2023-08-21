@@ -73,14 +73,19 @@ async function run() {
       res.send(result);
     });
 
+
+
     //------------------ Post method start------------------
     app.post("/allBooks", async (req, res) => {
       const newBook = req.body;
-      console.log(newBook);
+      // console.log(newBook);
       const result = await allBooksCollections.insertOne(newBook);
       res.send(result);
     });
     //------------------ Post method end------------------
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
