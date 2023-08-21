@@ -90,21 +90,35 @@ async function run() {
 
 
  // payment intent
- app.post('/create-payment-intent',  async (req, res) => {
-  console.log(req);
-  const { price } = req.body
-  const amount = parseFloat(price) * 100
-  if (!price) return
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amount,
-    currency: 'usd',
-    payment_method_types: ['card'],
-  })
+ app.post('/create-payment-intent', async (req, res) => {
+  try {
+    const { price } = req.body;
+    if (!price) {
+      return res.status(400).json({ error: 'Missing price in request body' });
+    }
 
-  res.send({
-    clientSecret: paymentIntent.client_secret,
-  })
-})
+    // Convert the price to a whole number in cents
+    const amount = Math.round(parseFloat(price) * 100);
+
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid price' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      payment_method_types: ['card'],
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: 'An error occurred while creating the payment intent' });
+  }
+});
+
 
 // payment related api
 app.post('/payments', async (req, res) => {
