@@ -141,6 +141,20 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/paymentHistory", async (req, res) => {     
+      const result = await paymentCollection
+        .find()
+        .sort({ date: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+
+    // app.get("/users", async (req, res) => {
+    //   const result = await usersCollection.find().toArray();
+    //   res.send(result);
+    // });
+
     // post  best selling & recent selling start by tonmoy
 
     app.post("/bestSellingAndRecentSelling", async (req, res) => {
