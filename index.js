@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const SSLCommerzPayment = require('sslcommerz-lts')
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,6 +23,17 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }   
 });
+
+
+
+
+// SSlCommerz id nad key start Tonmoy
+
+const store_id = `${process.env.SSLCOMMERZ_ID}`
+const store_passwd = `${process.env.SSLCOMMERZ_PASSWORD}`
+const is_live = false //true for live, false for sandbox
+
+// SSlCommerz id nad key end Tonmoy
 
 async function run() {
   try {
@@ -202,6 +214,115 @@ app.get('/recentSelling',async(req,res)=>{
 
 
 //  get recent selling data  end by  Tonmoy
+
+
+
+//  post data SSLCommerz start  by Tonmoy 
+
+app.post('/order',async(req,res)=>{
+
+  const info= req.body;
+
+  // console.log(info)
+
+  const random_id= new ObjectId().toString()
+  const data = {
+    total_amount: info?.price,
+    currency: 'BDT',
+    tran_id: random_id, // use unique tran_id for each api call
+    success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
+    fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
+    cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
+    ipn_url: 'http://localhost:3030/ipn',
+    shipping_method: 'Courier',
+    product_name: 'Computer.',
+    product_category: 'Electronic',
+    product_profile: 'general',
+    cus_name: info?.name,
+    cus_email: info?.email,
+    cus_add1: 'Dhaka',
+    cus_add2: 'Dhaka',
+    cus_city: 'Dhaka',
+    cus_state: 'Dhaka',
+    cus_postcode: '1000',
+    cus_country: 'Bangladesh',
+    cus_phone: '01711111111',
+    cus_fax: '01711111111',
+    ship_name: 'Customer Name',
+    ship_add1: 'Dhaka',
+    ship_add2: 'Dhaka',
+    ship_city: 'Dhaka',
+    ship_state: 'Dhaka',
+    ship_postcode: 1000,
+    ship_country: 'Bangladesh',
+};
+const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+sslcz.init(data).then(apiResponse => {
+    // Redirect the user to payment gateway
+    let GatewayPageURL = apiResponse.GatewayPageURL
+    res.send({url:GatewayPageURL})
+    // console.log('Redirecting to: ', GatewayPageURL)
+});
+
+//  payment success start
+app.post('/payment/success/:id',async(req,res)=>{
+
+ const tran_id=req.params.id
+  
+  const payment_details={
+    transactionId:tran_id,
+    mail: info?.email,
+    date:info?.date,
+    books: [...info?.books]
+    
+  }
+
+const result = await paymentCollection.insertOne(payment_details)
+
+  
+
+  if(result.insertedId){
+    res.redirect(`http://localhost:5173/SSLPaymentSuccess`)
+  }
+
+ 
+});
+//  payment success end
+
+
+//  payment  fail stat
+
+  app.post('/payment/fail',async(req,res)=>{
+
+
+    res.redirect(`http://localhost:5173`)
+
+  })
+
+
+//  payment fail end
+
+//  payment  cancel stat
+
+  app.post('/payment/cancel',async(req,res)=>{
+
+
+    res.redirect(`http://localhost:5173`)
+
+  })
+
+
+//  payment cancel end
+
+
+
+})
+
+
+
+
+//  post data SSLCommerz end  by Tonmoy 
+
 
 
 
