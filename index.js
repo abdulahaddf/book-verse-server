@@ -149,12 +149,6 @@ async function run() {
       res.send(result);
     });
 
-
-    // app.get("/users", async (req, res) => {
-    //   const result = await usersCollection.find().toArray();
-    //   res.send(result);
-    // });
-
     // post  best selling & recent selling start by tonmoy
 
     app.post("/bestSellingAndRecentSelling", async (req, res) => {
