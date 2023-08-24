@@ -99,6 +99,53 @@ async function run() {
     });
     //------------------ Post method end------------------
 
+    //------------------ Update method end------------------
+
+    app.put("/allBooks/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateBook = req.body;
+        console.log(id, updateBook);
+
+        const book = {
+          $set: {
+            title: updateBook.title,
+            author: updateBook.author,
+            category: updateBook.category,
+            language: updateBook.language,
+            real_price: updateBook.real_price,
+            offer_price: updateBook.offer_price,
+            page_numbers: updateBook.page_numbers,
+            rating: updateBook.rating,
+            published: updateBook.published,
+            about_author: updateBook.about_author,
+            description: updateBook.description,
+            cover_image_url: updateBook.cover_image_url,
+            author_image_url: updateBook.author_image_url,
+          },
+        };
+
+        const result = await allBooksCollections.updateOne(
+          filter,
+          book,
+          options
+        );
+
+        if (result.modifiedCount > 0) {
+          res.send({ success: true, message: "Book updated successfully" });
+        } else {
+          res.status(404).send({ success: false, message: "Book not found" });
+        }
+      } catch (error) {
+        console.error("Error updating book:", error);
+        res.status(500).send({ success: false, message: "An error occurred" });
+      }
+    });
+
+    //------------------ Update method end------------------
+
     //------------------ Delete method start------------------
     app.delete("/allBooks/:id", async (req, res) => {
       const id = req.params.id;
@@ -136,11 +183,9 @@ async function run() {
         });
       } catch (error) {
         console.error("Error creating payment intent:", error);
-        res
-          .status(500)
-          .json({
-            error: "An error occurred while creating the payment intent",
-          });
+        res.status(500).json({
+          error: "An error occurred while creating the payment intent",
+        });
       }
     });
 
@@ -153,7 +198,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/paymentHistory", async (req, res) => {     
+    app.get("/paymentHistory", async (req, res) => {
       const result = await paymentCollection
         .find()
         .sort({ date: -1 })
