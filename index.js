@@ -110,8 +110,8 @@ async function run() {
             published: updateBook.published,
             about_author: updateBook.about_author,
             description: updateBook.description,
-            cover_image_url: updateBook.cover_image_url,
-            author_image_url: updateBook.author_image_url,
+            cover_image: updateBook.cover_image,
+            author_image: updateBook.author_image,
           },
         };
 
@@ -193,6 +193,150 @@ async function run() {
         .toArray();
       res.send(result);
     });
+
+    // revenue start----------------------------------
+    //example code-------------please don't uncomment
+
+    // app.get("/revenueSummary", async (req, res) => {
+    //   try {
+    //     const currentDate = new Date().toISOString().split("T")[0];
+
+    //     // Fetch daily payments
+    //     const dailyPayments = await paymentCollection.find({
+    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
+    //     }).toArray();
+
+    //     // Calculate daily revenue
+    //     const dailyRevenue = dailyPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     const totalPayments = await paymentCollection.find().toArray();
+
+    //     // Calculate total revenue
+    //     const totalRevenue = totalPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     res.json({
+    //       dailyRevenue,
+    //       totalRevenue
+    //     });
+    //   } catch (error) {
+    //     console.error("Error:", error);
+    //     res.status(500).json({ error: "An error occurred" });
+    //   }
+    // });
+
+    app.get("/revenueSummary", async (req, res) => {
+      try {
+        const currentDate = new Date().toISOString().split("T")[0];
+
+        // Fetch daily payments
+        const dailyPayments = await paymentCollection
+          .find({
+            date: {
+              $gte: new Date(currentDate),
+              $lt: new Date(currentDate + "T23:59:59"),
+            },
+          })
+          .toArray();
+
+        // Calculate daily revenue
+        const dailyRevenue = dailyPayments.reduce(
+          (total, payment) => total + (payment.total_price || 0),
+          0
+        );
+
+        const totalPayments = await paymentCollection.find().toArray();
+
+        // Calculate total revenue
+        const totalRevenue = totalPayments.reduce(
+          (total, payment) => total + (payment.total_price || 0),
+          0
+        );
+
+        // Calculate monthly revenue for the current month
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        console.log("Current Year:", currentYear);
+        console.log("Current Month:", currentMonth);
+
+        const monthlyPayments = await paymentCollection
+          .find({
+            date: {
+              $regex: `-${currentYear}-${currentMonth
+                .toString()
+                .padStart(2, "0")}`,
+            },
+          })
+          .toArray();
+        console.log("Monthly Payments:", monthlyPayments);
+
+        const monthlyRevenue = monthlyPayments.reduce(
+          (total, payment) => total + (payment.total_price || 0),
+          0
+        );
+
+        res.json({
+          dailyRevenue,
+          totalRevenue,
+          monthlyRevenue,
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "An error occurred" });
+      }
+    });
+
+    // weakly revenue for chart------ TODO CODE start--------------------
+
+    app.get("/dailyRevenuePast7Days", async (req, res) => {
+      try {
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+    
+        const last7Days = new Array(7).fill(null).map((_, index) => {
+          const date = new Date(currentDate);
+          date.setDate(date.getDate() - index);
+          return date;
+        });
+    
+        const dailyRevenueData = await Promise.all(
+          last7Days.map(async (date) => {
+            const startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0);
+    
+            const endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999);
+    
+            const dailyPayments = await paymentCollection
+              .find({
+                date: { $gte: startDate, $lte: endDate },
+                total_price: { $exists: true, $ne: null },
+              })
+              .toArray();
+    
+            const totalRevenue = dailyPayments.reduce(
+              (total, payment) => total + (payment.total_price || 0),
+              0
+            );
+    
+            return { date, totalRevenue };
+          })
+        );
+    
+        res.json(dailyRevenueData);
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "An error occurred" });
+      }
+    });
+    // weakly revenue for chart------ TODO CODE end--------------------
+    // revenue end----------------------------------
+
 
     // post  best selling & recent selling start by tonmoy
 
