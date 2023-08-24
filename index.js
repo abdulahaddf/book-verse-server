@@ -289,7 +289,9 @@ app.post('/payment/success/:id',async(req,res)=>{
     transactionId:tran_id,
     mail: info?.email,
     date:info?.date,
-    books: [...info?.books]
+    books: [...info?.books],
+    total_price: info?.price,
+    name:info?.name
     
   }
 
