@@ -4,7 +4,7 @@ require("dotenv").config();
 const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
-const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware
 app.use(cors());
@@ -41,7 +41,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }   
+  },
 });
 
 async function run() {
@@ -182,127 +182,190 @@ async function run() {
     //------------------ Post method start------------------
     app.post("/allBooks", async (req, res) => {
       const newBook = req.body;
-      console.log(newBook);
+      // console.log(newBook);
       const result = await allBooksCollections.insertOne(newBook);
       res.send(result);
     });
     //------------------ Post method end------------------
 
+    //------------------ Update method end------------------
 
- // payment intent
- app.post('/create-payment-intent', async (req, res) => {
-  try {
-    const { price } = req.body;
-    if (!price) {
-      return res.status(400).json({ error: 'Missing price in request body' });
-    }
+    app.put("/allBooks/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateBook = req.body;
+        console.log(id, updateBook);
 
-    // Convert the price to a whole number in cents
-    const amount = Math.round(parseFloat(price) * 100);
-
-    if (isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ error: 'Invalid price' });
-    }
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: 'usd',
-      payment_method_types: ['card'],
-    });
-
-    res.send({
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (error) {
-    console.error('Error creating payment intent:', error);
-    res.status(500).json({ error: 'An error occurred while creating the payment intent' });
-  }
-});
-
-
-// payment related api
-app.post('/payments', async (req, res) => {
-  const payment = req.body
-  console.log('pay',payment);
-  const result = await paymentCollection.insertOne(payment)
-  console.log('res',result);
-  res.send(result)
-})
-
-
-// post  best selling & recent selling start by tonmoy
-
-app.post('/bestSellingAndRecentSelling', async (req, res) => {
-  try {
-    const booksData = req.body;
-
-    const { previous_id, count = count || 1, purchase_date } = booksData;
-
-    let result;
-
-    const existingBook = await bestSellingAndRecentSelling.findOne({ previous_id });
-
-    if (existingBook) {
-      const totalCount = existingBook.count + count;
-
-      result = await bestSellingAndRecentSelling.updateOne(
-        { previous_id },
-        {
+        const book = {
           $set: {
-            count: totalCount,
-            purchase_date
-          }
+            title: updateBook.title,
+            author: updateBook.author,
+            category: updateBook.category,
+            language: updateBook.language,
+            real_price: updateBook.real_price,
+            offer_price: updateBook.offer_price,
+            page_numbers: updateBook.page_numbers,
+            rating: updateBook.rating,
+            published: updateBook.published,
+            about_author: updateBook.about_author,
+            description: updateBook.description,
+            cover_image_url: updateBook.cover_image_url,
+            author_image_url: updateBook.author_image_url,
+          },
+        };
+
+        const result = await allBooksCollections.updateOne(
+          filter,
+          book,
+          options
+        );
+
+        if (result.modifiedCount > 0) {
+          res.send({ success: true, message: "Book updated successfully" });
+        } else {
+          res.status(404).send({ success: false, message: "Book not found" });
         }
-      );
-    } else {
-      const newData = { ...booksData, count: count, purchase_date: purchase_date };
-      result = await bestSellingAndRecentSelling.insertOne(newData);
-    }
+      } catch (error) {
+        console.error("Error updating book:", error);
+        res.status(500).send({ success: false, message: "An error occurred" });
+      }
+    });
 
-    console.log('Database update result:', result);
+    //------------------ Update method end------------------
 
-    res.status(200).json({ message: 'Data updated successfully' });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: 'An error occurred' });
-  }
-});
+    //------------------ Delete method start------------------
+    app.delete("/allBooks/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await allBooksCollections.deleteOne(query);
+      res.send(result);
+    });
+    //------------------ Delete method end------------------
 
+    // payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      try {
+        const { price } = req.body;
+        if (!price) {
+          return res
+            .status(400)
+            .json({ error: "Missing price in request body" });
+        }
 
+        // Convert the price to a whole number in cents
+        const amount = Math.round(parseFloat(price) * 100);
 
-// post  best selling & recent selling end by Tonmoy
+        if (isNaN(amount) || amount <= 0) {
+          return res.status(400).json({ error: "Invalid price" });
+        }
 
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "usd",
+          payment_method_types: ["card"],
+        });
 
-//  get best selling data  start by Tonmoy
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        res.status(500).json({
+          error: "An error occurred while creating the payment intent",
+        });
+      }
+    });
 
-app.get('/bestSelling',async(req,res)=>{
+    // payment related api
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      console.log("pay", payment);
+      const result = await paymentCollection.insertOne(payment);
+      console.log("res", result);
+      res.send(result);
+    });
 
+    app.get("/paymentHistory", async (req, res) => {
+      const result = await paymentCollection
+        .find()
+        .sort({ date: -1 })
+        .toArray();
+      res.send(result);
+    });
 
-  const result= await bestSellingAndRecentSelling.find().sort({count: -1}).toArray();
+    // post  best selling & recent selling start by tonmoy
 
-    res.send(result)
+    app.post("/bestSellingAndRecentSelling", async (req, res) => {
+      try {
+        const booksData = req.body;
 
-})
+        const { previous_id, count = count || 1, purchase_date } = booksData;
 
+        let result;
 
-//  get best selling data  end by  Tonmoy
+        const existingBook = await bestSellingAndRecentSelling.findOne({
+          previous_id,
+        });
 
+        if (existingBook) {
+          const totalCount = existingBook.count + count;
 
-//  get recent selling data  start by Tonmoy
+          result = await bestSellingAndRecentSelling.updateOne(
+            { previous_id },
+            {
+              $set: {
+                count: totalCount,
+                purchase_date,
+              },
+            }
+          );
+        } else {
+          const newData = {
+            ...booksData,
+            count: count,
+            purchase_date: purchase_date,
+          };
+          result = await bestSellingAndRecentSelling.insertOne(newData);
+        }
 
-app.get('/recentSelling',async(req,res)=>{
+        console.log("Database update result:", result);
 
+        res.status(200).json({ message: "Data updated successfully" });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "An error occurred" });
+      }
+    });
 
-  const result= await bestSellingAndRecentSelling.find().sort({purchase_date: -1}).toArray();
+    // post  best selling & recent selling end by Tonmoy
 
-    res.send(result)
+    //  get best selling data  start by Tonmoy
 
-})
+    app.get("/bestSelling", async (req, res) => {
+      const result = await bestSellingAndRecentSelling
+        .find()
+        .sort({ count: -1 })
+        .toArray();
 
+      res.send(result);
+    });
 
-//  get recent selling data  end by  Tonmoy
+    //  get best selling data  end by  Tonmoy
 
+    //  get recent selling data  start by Tonmoy
 
+    app.get("/recentSelling", async (req, res) => {
+      const result = await bestSellingAndRecentSelling
+        .find()
+        .sort({ purchase_date: -1 })
+        .toArray();
+
+      res.send(result);
+    });
+
+    //  get recent selling data  end by  Tonmoy
 
 
 
