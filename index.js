@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
@@ -9,6 +9,27 @@ const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 // middleware
 app.use(cors());
 app.use(express.json());
+
+const verifyJWT = (req, res, next) =>{
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({error: true, message: 'unauthorized access'});
+  }
+  const token = authorization.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if(err){
+      return res.status(401).send({error: true, message: 'unauthorized access'});
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
+
+
+
+
+
 
 // Data-Base start
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -33,10 +54,41 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
+    
  
 
 
+    // jwt by nahid start 
 
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'1h'})
+
+      res.send({token})
+    })
+
+
+
+
+    // const verifyJWT = (req, res, next) =>{
+    //   const authorization = req.headers.authorization;
+    //   if(!authorization){
+    //     return res.status(401).send({error: true, message: 'unauthorized access'});
+    //   }
+    //   const token = authorization.split(' ')[1];
+    //   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    //     if(err){
+    //       return res.status(401).send({error: true, message: 'unauthorized access'});
+    //     }
+    //     req.decoded = decoded;
+    //     next();
+    //   })
+    // }
+
+
+
+
+ // jwt by nahid end
 
     // get all books  start by Tonmoy
 
@@ -79,6 +131,53 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+    app.delete('/users/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await usersCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+    // make admin start by nahid 
+    app.get('/users/admin/:email',verifyJWT, async(req, res) => {
+      const email = req.params.email;
+      if(req.decoded.email !== email){
+       return  res.send({admin: false})
+      }
+      console.log(req.decoded.email)
+      console.log(email)
+      const query = {email: email}
+      const user = await usersCollection.findOne(query);
+      const result = {admin: user?.role === 'admin'}
+      res.send(result)
+    })
+
+    
+
+
+
+    app.patch('/users/admin/:id', async(req, res)=> {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id)};
+      const updateDoc = {
+        $set:{
+          role: 'admin'
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+
+    
+
+
+ // make admin end by nahid 
+
+
+
+
 
     //------------------ Post method start------------------
     app.post("/allBooks", async (req, res) => {
@@ -202,6 +301,8 @@ app.get('/recentSelling',async(req,res)=>{
 
 
 //  get recent selling data  end by  Tonmoy
+
+
 
 
 
