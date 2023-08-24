@@ -47,6 +47,62 @@ async function run() {
     });
     // get all books  end by Tonmoy
 
+
+//review api
+app.post('/add-review', async (req, res) => {
+  const { bookId, name, photo, rating, review, identifier,postDate } = req.body;
+console.log(bookId);
+  try {
+    const existingReview = await allBooksCollections.findOne({
+     
+      $and: [
+        { _id: new ObjectId(bookId) },
+        { 'review.identifier': identifier }
+      ]
+    });
+
+    if (existingReview) {
+      return res.status(400).json({ message: 'You have already reviewed this book' });
+    }
+
+    const updatedBook = await allBooksCollections.findOneAndUpdate(
+      { _id: new ObjectId(bookId) },
+      { $push: { review: { name, photo, rating, review, identifier,postDate } } },
+      { returnOriginal: false }
+    );
+
+    if (!updatedBook.value) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+
+    return res.json({ message: 'Review added successfully', book: updatedBook.value });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    return res.status(500).json({ message: 'An error occurred' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // get single book by id  start by Tonmoy
 
     app.get("/singleBook/:id", async (req, res) => {
@@ -202,6 +258,18 @@ app.get('/recentSelling',async(req,res)=>{
 
 
 //  get recent selling data  end by  Tonmoy
+
+
+
+
+//find purchased books
+app.get("/purchased", async (req, res) => {
+  const email = req.query.email;
+  // console.log(email);
+  const query = { mail: email };
+  const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+  res.send(result);
+});
 
 
 
