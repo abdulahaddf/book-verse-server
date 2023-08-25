@@ -707,8 +707,6 @@ const result = await paymentCollection.insertOne(payment_details)
 })
 
 
-
-
 //  post data SSLCommerz end  by Tonmoy 
 
 
