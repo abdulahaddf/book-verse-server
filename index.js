@@ -170,6 +170,14 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/userinfo", async (req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result)
+    })
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -183,6 +191,44 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+    app.patch("/userinfoupdate", async (req, res) => {
+      const query = req.query.email;
+      const filter={email:query}
+      const userinfo = req.body;
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          displayName: userinfo.displayName,
+          photoURL: userinfo.photoURL,
+          address: userinfo.address,
+          gender: userinfo.gender,
+          birthday:userinfo.birthday
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+      console.log(result)
+    })
+
+    app.patch("/userinfoupdate", async (req, res) => {
+      const query = req.query.email;
+      const filter={email:query}
+      const userinfo = req.body;
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          displayName: userinfo.displayName,
+          photoURL: userinfo.photoURL,
+          address: userinfo.address,
+          gender: userinfo.gender,
+          birthday:userinfo.birthday
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+      console.log(result)
+    })
 
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
