@@ -727,9 +727,13 @@ async function run() {
     })
 
 
+<<<<<<< HEAD
 
 
     //  post data SSLCommerz end  by Tonmoy 
+=======
+//  post data SSLCommerz end  by Tonmoy 
+>>>>>>> 612c4b7f174e4fc303028e92100ba8e089e3c2e2
 
 
 
