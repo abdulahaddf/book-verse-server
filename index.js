@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');const SSLCommerzPayment = require('sslcommerz-lts')
+
 const app = express();
 const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
@@ -44,6 +45,17 @@ const client = new MongoClient(uri, {
   },
 });
 
+
+
+
+// SSlCommerz id start key start Tonmoy
+
+const store_id = `${process.env.SSLCOMMERZ_ID}`
+const store_passwd = `${process.env.SSLCOMMERZ_PASSWORD}`
+const is_live = false //true for live, false for sandbox
+
+// SSlCommerz id end key end Tonmoy
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -70,23 +82,6 @@ async function run() {
 
 
 
-    // const verifyJWT = (req, res, next) =>{
-    //   const authorization = req.headers.authorization;
-    //   if(!authorization){
-    //     return res.status(401).send({error: true, message: 'unauthorized access'});
-    //   }
-    //   const token = authorization.split(' ')[1];
-    //   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    //     if(err){
-    //       return res.status(401).send({error: true, message: 'unauthorized access'});
-    //     }
-    //     req.decoded = decoded;
-    //     next();
-    //   })
-    // }
-
-
-
 
  // jwt by nahid end
 
@@ -98,6 +93,62 @@ async function run() {
       res.send(result);
     });
     // get all books  end by Tonmoy
+
+
+//review api
+app.post('/add-review', async (req, res) => {
+  const { bookId, name, photo, rating, review, identifier,postDate } = req.body;
+console.log(bookId);
+  try {
+    const existingReview = await allBooksCollections.findOne({
+     
+      $and: [
+        { _id: new ObjectId(bookId) },
+        { 'review.identifier': identifier }
+      ]
+    });
+
+    if (existingReview) {
+      return res.status(400).json({ message: 'You have already reviewed this book' });
+    }
+
+    const updatedBook = await allBooksCollections.findOneAndUpdate(
+      { _id: new ObjectId(bookId) },
+      { $push: { review: { name, photo, rating, review, identifier,postDate } } },
+      { returnOriginal: false }
+    );
+
+    if (!updatedBook.value) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+
+    return res.json({ message: 'Review added successfully', book: updatedBook.value });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    return res.status(500).json({ message: 'An error occurred' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // get single book by id  start by Tonmoy
 
@@ -238,8 +289,8 @@ async function run() {
             published: updateBook.published,
             about_author: updateBook.about_author,
             description: updateBook.description,
-            cover_image_url: updateBook.cover_image_url,
-            author_image_url: updateBook.author_image_url,
+            cover_image: updateBook.cover_image,
+            author_image: updateBook.author_image,
           },
         };
 
@@ -322,6 +373,150 @@ async function run() {
       res.send(result);
     });
 
+    // revenue start----------------------------------
+    //example code-------------please don't uncomment
+
+    // app.get("/revenueSummary", async (req, res) => {
+    //   try {
+    //     const currentDate = new Date().toISOString().split("T")[0];
+
+    //     // Fetch daily payments
+    //     const dailyPayments = await paymentCollection.find({
+    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
+    //     }).toArray();
+
+    //     // Calculate daily revenue
+    //     const dailyRevenue = dailyPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     const totalPayments = await paymentCollection.find().toArray();
+
+    //     // Calculate total revenue
+    //     const totalRevenue = totalPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     res.json({
+    //       dailyRevenue,
+    //       totalRevenue
+    //     });
+    //   } catch (error) {
+    //     console.error("Error:", error);
+    //     res.status(500).json({ error: "An error occurred" });
+    //   }
+    // });
+
+    app.get("/revenueSummary", async (req, res) => {
+      try {
+        const currentDate = new Date().toISOString().split("T")[0];
+
+        // Fetch daily payments
+        const dailyPayments = await paymentCollection
+          .find({
+            date: {
+              $gte: new Date(currentDate),
+              $lt: new Date(currentDate + "T23:59:59"),
+            },
+          })
+          .toArray();
+
+        // Calculate daily revenue
+        const dailyRevenue = dailyPayments.reduce(
+          (total, payment) => total + (payment.total_price || 0),
+          0
+        );
+
+        const totalPayments = await paymentCollection.find().toArray();
+
+        // Calculate total revenue
+        const totalRevenue = totalPayments.reduce(
+          (total, payment) => total + (payment.total_price || 0),
+          0
+        );
+
+        // Calculate monthly revenue for the current month
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        console.log("Current Year:", currentYear);
+        console.log("Current Month:", currentMonth);
+
+        const monthlyPayments = await paymentCollection
+          .find({
+            date: {
+              $regex: `-${currentYear}-${currentMonth
+                .toString()
+                .padStart(2, "0")}`,
+            },
+          })
+          .toArray();
+        console.log("Monthly Payments:", monthlyPayments);
+
+        const monthlyRevenue = monthlyPayments.reduce(
+          (total, payment) => total + (payment.total_price || 0),
+          0
+        );
+
+        res.json({
+          dailyRevenue,
+          totalRevenue,
+          monthlyRevenue,
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "An error occurred" });
+      }
+    });
+
+    // weakly revenue for chart------ TODO CODE start--------------------
+
+    app.get("/dailyRevenuePast7Days", async (req, res) => {
+      try {
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+    
+        const last7Days = new Array(7).fill(null).map((_, index) => {
+          const date = new Date(currentDate);
+          date.setDate(date.getDate() - index);
+          return date;
+        });
+    
+        const dailyRevenueData = await Promise.all(
+          last7Days.map(async (date) => {
+            const startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0);
+    
+            const endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999);
+    
+            const dailyPayments = await paymentCollection
+              .find({
+                date: { $gte: startDate, $lte: endDate },
+                total_price: { $exists: true, $ne: null },
+              })
+              .toArray();
+    
+            const totalRevenue = dailyPayments.reduce(
+              (total, payment) => total + (payment.total_price || 0),
+              0
+            );
+    
+            return { date, totalRevenue };
+          })
+        );
+    
+        res.json(dailyRevenueData);
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "An error occurred" });
+      }
+    });
+    // weakly revenue for chart------ TODO CODE end--------------------
+    // revenue end----------------------------------
+
+
     // post  best selling & recent selling start by tonmoy
 
     app.post("/bestSellingAndRecentSelling", async (req, res) => {
@@ -393,6 +588,129 @@ async function run() {
     });
 
     //  get recent selling data  end by  Tonmoy
+
+
+
+
+//find purchased books
+app.get("/purchased", async (req, res) => {
+  const email = req.query.email;
+  // console.log(email);
+  const query = { mail: email };
+  const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+  res.send(result);
+});
+
+
+
+//  post data SSLCommerz start  by Tonmoy 
+
+app.post('/order',async(req,res)=>{
+
+  const info= req.body;
+
+  // console.log(info)
+
+  const random_id= new ObjectId().toString()
+  const data = {
+    total_amount: info?.price,
+    currency: 'BDT',
+    tran_id: random_id, // use unique tran_id for each api call
+    success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
+    fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
+    cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
+    ipn_url: 'http://localhost:3030/ipn',
+    shipping_method: 'Courier',
+    product_name: 'Computer.',
+    product_category: 'Electronic',
+    product_profile: 'general',
+    cus_name: info?.name,
+    cus_email: info?.email,
+    cus_add1: 'Dhaka',
+    cus_add2: 'Dhaka',
+    cus_city: 'Dhaka',
+    cus_state: 'Dhaka',
+    cus_postcode: '1000',
+    cus_country: 'Bangladesh',
+    cus_phone: '01711111111',
+    cus_fax: '01711111111',
+    ship_name: 'Customer Name',
+    ship_add1: 'Dhaka',
+    ship_add2: 'Dhaka',
+    ship_city: 'Dhaka',
+    ship_state: 'Dhaka',
+    ship_postcode: 1000,
+    ship_country: 'Bangladesh',
+};
+const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+sslcz.init(data).then(apiResponse => {
+    // Redirect the user to payment gateway
+    let GatewayPageURL = apiResponse.GatewayPageURL
+    res.send({url:GatewayPageURL})
+    // console.log('Redirecting to: ', GatewayPageURL)
+});
+
+//  payment success start
+app.post('/payment/success/:id',async(req,res)=>{
+
+ const tran_id=req.params.id
+  
+  const payment_details={
+    transactionId:tran_id,
+    mail: info?.email,
+    date:info?.date,
+    books: [...info?.books],
+    total_price: info?.price,
+    name:info?.name
+    
+  }
+
+const result = await paymentCollection.insertOne(payment_details)
+
+  
+
+  if(result.insertedId){
+    res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
+  }
+
+ 
+});
+//  payment success end
+
+
+//  payment  fail stat
+
+  app.post('/payment/fail',async(req,res)=>{
+
+
+    res.redirect(`https://book-verse-endcoders.netlify.app`)
+
+  })
+
+
+//  payment fail end
+
+//  payment  cancel stat
+
+  app.post('/payment/cancel',async(req,res)=>{
+
+
+    res.redirect(`https://book-verse-endcoders.netlify.app`)
+
+  })
+
+
+//  payment cancel end
+
+
+
+})
+
+
+
+
+//  post data SSLCommerz end  by Tonmoy 
+
 
 
 
