@@ -48,13 +48,13 @@ const client = new MongoClient(uri, {
 
 
 
-// SSlCommerz id nad key start Tonmoy
+// SSlCommerz id start key start Tonmoy
 
 const store_id = `${process.env.SSLCOMMERZ_ID}`
 const store_passwd = `${process.env.SSLCOMMERZ_PASSWORD}`
 const is_live = false //true for live, false for sandbox
 
-// SSlCommerz id nad key end Tonmoy
+// SSlCommerz id end key end Tonmoy
 
 async function run() {
   try {
@@ -79,23 +79,6 @@ async function run() {
       res.send({token})
     })
 
-
-
-
-    // const verifyJWT = (req, res, next) =>{
-    //   const authorization = req.headers.authorization;
-    //   if(!authorization){
-    //     return res.status(401).send({error: true, message: 'unauthorized access'});
-    //   }
-    //   const token = authorization.split(' ')[1];
-    //   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    //     if(err){
-    //       return res.status(401).send({error: true, message: 'unauthorized access'});
-    //     }
-    //     req.decoded = decoded;
-    //     next();
-    //   })
-    // }
 
 
 
@@ -516,7 +499,7 @@ const result = await paymentCollection.insertOne(payment_details)
   
 
   if(result.insertedId){
-    res.redirect(`http://localhost:5173/SSLPaymentSuccess`)
+    res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
   }
 
  
@@ -529,7 +512,7 @@ const result = await paymentCollection.insertOne(payment_details)
   app.post('/payment/fail',async(req,res)=>{
 
 
-    res.redirect(`http://localhost:5173`)
+    res.redirect(`https://book-verse-endcoders.netlify.app`)
 
   })
 
@@ -541,7 +524,7 @@ const result = await paymentCollection.insertOne(payment_details)
   app.post('/payment/cancel',async(req,res)=>{
 
 
-    res.redirect(`http://localhost:5173`)
+    res.redirect(`https://book-verse-endcoders.netlify.app`)
 
   })
 
