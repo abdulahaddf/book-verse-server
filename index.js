@@ -673,7 +673,12 @@ app.get("/oldBooks", async (req, res) => {
   res.send(result);
 });
 
-
+app.get("/oldBook/:id", async (req, res) => {
+  const id = req.params.id;
+  const find = { _id: new ObjectId(id) };
+  const result = await oldBooksCollection.findOne(find);
+  res.send(result);
+});
 
 //Old Books API started by AHAD
 
