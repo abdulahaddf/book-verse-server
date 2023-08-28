@@ -66,6 +66,8 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
+    const oldBooksCollection = database.collection("oldBooks");
+
     
  
 
@@ -128,24 +130,6 @@ console.log(bookId);
     return res.status(500).json({ message: 'An error occurred' });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -373,41 +357,6 @@ console.log(bookId);
       res.send(result);
     });
 
-    // revenue start----------------------------------
-    //example code-------------please don't uncomment
-
-    // app.get("/revenueSummary", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date().toISOString().split("T")[0];
-
-    //     // Fetch daily payments
-    //     const dailyPayments = await paymentCollection.find({
-    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
-    //     }).toArray();
-
-    //     // Calculate daily revenue
-    //     const dailyRevenue = dailyPayments.reduce(
-    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
-    //       0
-    //     );
-
-    //     const totalPayments = await paymentCollection.find().toArray();
-
-    //     // Calculate total revenue
-    //     const totalRevenue = totalPayments.reduce(
-    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
-    //       0
-    //     );
-
-    //     res.json({
-    //       dailyRevenue,
-    //       totalRevenue
-    //     });
-    //   } catch (error) {
-    //     console.error("Error:", error);
-    //     res.status(500).json({ error: "An error occurred" });
-    //   }
-    // });
 
     app.get("/revenueSummary", async (req, res) => {
       try {
@@ -710,7 +659,20 @@ const result = await paymentCollection.insertOne(payment_details)
 //  post data SSLCommerz end  by Tonmoy 
 
 
+//Old Books API started by AHAD
 
+app.post("/oldBooks", async (req, res) => {
+  const oldBook = req.body;
+  // console.log(oldBook);
+  const result = await oldBooksCollection.insertOne(oldBook);
+  res.send(result);
+});
+
+
+
+
+
+//Old Books API started by AHAD
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
