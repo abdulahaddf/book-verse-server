@@ -1,8 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const jwt = require('jsonwebtoken');
-const SSLCommerzPayment = require('sslcommerz-lts')
+const jwt = require('jsonwebtoken');const SSLCommerzPayment = require('sslcommerz-lts')
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -12,15 +11,15 @@ const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 app.use(cors());
 app.use(express.json());
 
-const verifyJWT = (req, res, next) => {
+const verifyJWT = (req, res, next) =>{
   const authorization = req.headers.authorization;
-  if (!authorization) {
-    return res.status(401).send({ error: true, message: 'unauthorized access' });
+  if(!authorization){
+    return res.status(401).send({error: true, message: 'unauthorized access'});
   }
   const token = authorization.split(' ')[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ error: true, message: 'unauthorized access' });
+    if(err){
+      return res.status(401).send({error: true, message: 'unauthorized access'});
     }
     req.decoded = decoded;
     next();
@@ -67,24 +66,24 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
-
-
+    
+ 
 
 
     // jwt by nahid start 
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'1h'})
 
-      res.send({ token })
+      res.send({token})
     })
 
 
 
 
 
-    // jwt by nahid end
+ // jwt by nahid end
 
     // get all books  start by Tonmoy
 
@@ -96,39 +95,39 @@ async function run() {
     // get all books  end by Tonmoy
 
 
-    //review api
-    app.post('/add-review', async (req, res) => {
-      const { bookId, name, photo, rating, review, identifier, postDate } = req.body;
-      console.log(bookId);
-      try {
-        const existingReview = await allBooksCollections.findOne({
-
-          $and: [
-            { _id: new ObjectId(bookId) },
-            { 'review.identifier': identifier }
-          ]
-        });
-
-        if (existingReview) {
-          return res.status(400).json({ message: 'You have already reviewed this book' });
-        }
-
-        const updatedBook = await allBooksCollections.findOneAndUpdate(
-          { _id: new ObjectId(bookId) },
-          { $push: { review: { name, photo, rating, review, identifier, postDate } } },
-          { returnOriginal: false }
-        );
-
-        if (!updatedBook.value) {
-          return res.status(404).json({ message: 'Book not found' });
-        }
-
-        return res.json({ message: 'Review added successfully', book: updatedBook.value });
-      } catch (error) {
-        console.error('Error adding review:', error);
-        return res.status(500).json({ message: 'An error occurred' });
-      }
+//review api
+app.post('/add-review', async (req, res) => {
+  const { bookId, name, photo, rating, review, identifier,postDate } = req.body;
+console.log(bookId);
+  try {
+    const existingReview = await allBooksCollections.findOne({
+     
+      $and: [
+        { _id: new ObjectId(bookId) },
+        { 'review.identifier': identifier }
+      ]
     });
+
+    if (existingReview) {
+      return res.status(400).json({ message: 'You have already reviewed this book' });
+    }
+
+    const updatedBook = await allBooksCollections.findOneAndUpdate(
+      { _id: new ObjectId(bookId) },
+      { $push: { review: { name, photo, rating, review, identifier,postDate } } },
+      { returnOriginal: false }
+    );
+
+    if (!updatedBook.value) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+
+    return res.json({ message: 'Review added successfully', book: updatedBook.value });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    return res.status(500).json({ message: 'An error occurred' });
+  }
+});
 
 
 
@@ -211,56 +210,37 @@ async function run() {
       console.log(result)
     })
 
-    app.patch("/userinfoupdate", async (req, res) => {
-      const query = req.query.email;
-      const filter={email:query}
-      const userinfo = req.body;
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          displayName: userinfo.displayName,
-          photoURL: userinfo.photoURL,
-          address: userinfo.address,
-          gender: userinfo.gender,
-          birthday:userinfo.birthday
-        }
-      }
-      const result = await usersCollection.updateOne(filter, updateDoc, options);
-      res.send(result)
-      console.log(result)
-    })
-
-    app.delete('/users/:id', async (req, res) => {
+    app.delete('/users/:id', async(req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
+      const query = {_id: new ObjectId(id)}
       const result = await usersCollection.deleteOne(query)
       res.send(result)
     })
 
 
     // make admin start by nahid 
-    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    app.get('/users/admin/:email',verifyJWT, async(req, res) => {
       const email = req.params.email;
-      if (req.decoded.email !== email) {
-        return res.send({ admin: false })
+      if(req.decoded.email !== email){
+       return  res.send({admin: false})
       }
       console.log(req.decoded.email)
       console.log(email)
-      const query = { email: email }
+      const query = {email: email}
       const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'admin' }
+      const result = {admin: user?.role === 'admin'}
       res.send(result)
     })
 
+    
 
 
 
-
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', async(req, res)=> {
       const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
+      const filter = { _id: new ObjectId(id)};
       const updateDoc = {
-        $set: {
+        $set:{
           role: 'admin'
         }
       }
@@ -268,10 +248,10 @@ async function run() {
       res.send(result)
     })
 
+    
 
 
-
-    // make admin end by nahid 
+ // make admin end by nahid 
 
 
 
@@ -496,37 +476,37 @@ async function run() {
       try {
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0);
-
+    
         const last7Days = new Array(7).fill(null).map((_, index) => {
           const date = new Date(currentDate);
           date.setDate(date.getDate() - index);
           return date;
         });
-
+    
         const dailyRevenueData = await Promise.all(
           last7Days.map(async (date) => {
             const startDate = new Date(date);
             startDate.setHours(0, 0, 0, 0);
-
+    
             const endDate = new Date(date);
             endDate.setHours(23, 59, 59, 999);
-
+    
             const dailyPayments = await paymentCollection
               .find({
                 date: { $gte: startDate, $lte: endDate },
                 total_price: { $exists: true, $ne: null },
               })
               .toArray();
-
+    
             const totalRevenue = dailyPayments.reduce(
               (total, payment) => total + (payment.total_price || 0),
               0
             );
-
+    
             return { date, totalRevenue };
           })
         );
-
+    
         res.json(dailyRevenueData);
       } catch (error) {
         console.error("Error:", error);
@@ -612,128 +592,122 @@ async function run() {
 
 
 
-    //find purchased books
-    app.get("/purchased", async (req, res) => {
-      const email = req.query.email;
-      // console.log(email);
-      const query = { mail: email };
-      const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
-      res.send(result);
-    });
+//find purchased books
+app.get("/purchased", async (req, res) => {
+  const email = req.query.email;
+  // console.log(email);
+  const query = { mail: email };
+  const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+  res.send(result);
+});
 
 
 
-    //  post data SSLCommerz start  by Tonmoy 
+//  post data SSLCommerz start  by Tonmoy 
 
-    app.post('/order', async (req, res) => {
+app.post('/order',async(req,res)=>{
 
-      const info = req.body;
+  const info= req.body;
 
-      // console.log(info)
+  // console.log(info)
 
-      const random_id = new ObjectId().toString()
-      const data = {
-        total_amount: info?.price,
-        currency: 'BDT',
-        tran_id: random_id, // use unique tran_id for each api call
-        success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
-        fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
-        cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
-        ipn_url: 'http://localhost:3030/ipn',
-        shipping_method: 'Courier',
-        product_name: 'Computer.',
-        product_category: 'Electronic',
-        product_profile: 'general',
-        cus_name: info?.name,
-        cus_email: info?.email,
-        cus_add1: 'Dhaka',
-        cus_add2: 'Dhaka',
-        cus_city: 'Dhaka',
-        cus_state: 'Dhaka',
-        cus_postcode: '1000',
-        cus_country: 'Bangladesh',
-        cus_phone: '01711111111',
-        cus_fax: '01711111111',
-        ship_name: 'Customer Name',
-        ship_add1: 'Dhaka',
-        ship_add2: 'Dhaka',
-        ship_city: 'Dhaka',
-        ship_state: 'Dhaka',
-        ship_postcode: 1000,
-        ship_country: 'Bangladesh',
-      };
-      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
-      sslcz.init(data).then(apiResponse => {
-        // Redirect the user to payment gateway
-        let GatewayPageURL = apiResponse.GatewayPageURL
-        res.send({ url: GatewayPageURL })
-        // console.log('Redirecting to: ', GatewayPageURL)
-      });
+  const random_id= new ObjectId().toString()
+  const data = {
+    total_amount: info?.price,
+    currency: 'BDT',
+    tran_id: random_id, // use unique tran_id for each api call
+    success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
+    fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
+    cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
+    ipn_url: 'http://localhost:3030/ipn',
+    shipping_method: 'Courier',
+    product_name: 'Computer.',
+    product_category: 'Electronic',
+    product_profile: 'general',
+    cus_name: info?.name,
+    cus_email: info?.email,
+    cus_add1: 'Dhaka',
+    cus_add2: 'Dhaka',
+    cus_city: 'Dhaka',
+    cus_state: 'Dhaka',
+    cus_postcode: '1000',
+    cus_country: 'Bangladesh',
+    cus_phone: '01711111111',
+    cus_fax: '01711111111',
+    ship_name: 'Customer Name',
+    ship_add1: 'Dhaka',
+    ship_add2: 'Dhaka',
+    ship_city: 'Dhaka',
+    ship_state: 'Dhaka',
+    ship_postcode: 1000,
+    ship_country: 'Bangladesh',
+};
+const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+sslcz.init(data).then(apiResponse => {
+    // Redirect the user to payment gateway
+    let GatewayPageURL = apiResponse.GatewayPageURL
+    res.send({url:GatewayPageURL})
+    // console.log('Redirecting to: ', GatewayPageURL)
+});
 
-      //  payment success start
-      app.post('/payment/success/:id', async (req, res) => {
+//  payment success start
+app.post('/payment/success/:id',async(req,res)=>{
 
-        const tran_id = req.params.id
+ const tran_id=req.params.id
+  
+  const payment_details={
+    transactionId:tran_id,
+    mail: info?.email,
+    date:info?.date,
+    books: [...info?.books],
+    total_price: info?.price,
+    name:info?.name
+    
+  }
 
-        const payment_details = {
-          transactionId: tran_id,
-          mail: info?.email,
-          date: info?.date,
-          books: [...info?.books],
-          total_price: info?.price,
-          name: info?.name
+const result = await paymentCollection.insertOne(payment_details)
 
-        }
+  
 
-        const result = await paymentCollection.insertOne(payment_details)
+  if(result.insertedId){
+    res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
+  }
 
-
-
-        if (result.insertedId) {
-          res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
-        }
-
-
-      });
-      //  payment success end
-
-
-      //  payment  fail stat
-
-      app.post('/payment/fail', async (req, res) => {
+ 
+});
+//  payment success end
 
 
-        res.redirect(`https://book-verse-endcoders.netlify.app`)
+//  payment  fail stat
 
-      })
-
-
-      //  payment fail end
-
-      //  payment  cancel stat
-
-      app.post('/payment/cancel', async (req, res) => {
+  app.post('/payment/fail',async(req,res)=>{
 
 
-        res.redirect(`https://book-verse-endcoders.netlify.app`)
+    res.redirect(`https://book-verse-endcoders.netlify.app`)
 
-      })
-
-
-      //  payment cancel end
+  })
 
 
+//  payment fail end
 
-    })
+//  payment  cancel stat
+
+  app.post('/payment/cancel',async(req,res)=>{
 
 
-<<<<<<< HEAD
+    res.redirect(`https://book-verse-endcoders.netlify.app`)
+
+  })
 
 
-    //  post data SSLCommerz end  by Tonmoy 
-=======
+//  payment cancel end
+
+
+
+})
+
+
 //  post data SSLCommerz end  by Tonmoy 
->>>>>>> 612c4b7f174e4fc303028e92100ba8e089e3c2e2
 
 
 
