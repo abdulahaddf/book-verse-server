@@ -668,7 +668,10 @@ app.post("/oldBooks", async (req, res) => {
   res.send(result);
 });
 
-
+app.get("/oldBooks", async (req, res) => {
+  const result = await oldBooksCollection.find().toArray();
+  res.send(result);
+});
 
 
 
