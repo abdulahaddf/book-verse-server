@@ -679,6 +679,13 @@ app.get("/oldBook/:id", async (req, res) => {
   const result = await oldBooksCollection.findOne(find);
   res.send(result);
 });
+app.get("/myBooks", async (req, res) => {
+  const email = req.query.email;
+  console.log("email coming", email);
+  const query = { sellerMail: email };
+  const result = await oldBooksCollection.find(query).toArray();
+  res.send(result);
+});
 
 //Old Books API started by AHAD
 
