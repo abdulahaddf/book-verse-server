@@ -66,15 +66,15 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
-
-
+    
+ 
 
 
     // jwt by nahid start 
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'7d'})
 
       res.send({ token })
     })
@@ -122,12 +122,12 @@ async function run() {
           return res.status(404).json({ message: 'Book not found' });
         }
 
-        return res.json({ message: 'Review added successfully', book: updatedBook.value });
-      } catch (error) {
-        console.error('Error adding review:', error);
-        return res.status(500).json({ message: 'An error occurred' });
-      }
-    });
+    return res.json({ message: 'Review added successfully', book: updatedBook.value });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    return res.status(500).json({ message: 'An error occurred' });
+  }
+});
 
 
 
@@ -373,41 +373,6 @@ async function run() {
       res.send(result);
     });
 
-    // revenue start----------------------------------
-    //example code-------------please don't uncomment
-
-    // app.get("/revenueSummary", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date().toISOString().split("T")[0];
-
-    //     // Fetch daily payments
-    //     const dailyPayments = await paymentCollection.find({
-    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
-    //     }).toArray();
-
-    //     // Calculate daily revenue
-    //     const dailyRevenue = dailyPayments.reduce(
-    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
-    //       0
-    //     );
-
-    //     const totalPayments = await paymentCollection.find().toArray();
-
-    //     // Calculate total revenue
-    //     const totalRevenue = totalPayments.reduce(
-    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
-    //       0
-    //     );
-
-    //     res.json({
-    //       dailyRevenue,
-    //       totalRevenue
-    //     });
-    //   } catch (error) {
-    //     console.error("Error:", error);
-    //     res.status(500).json({ error: "An error occurred" });
-    //   }
-    // });
 
     app.get("/revenueSummary", async (req, res) => {
       try {
@@ -709,9 +674,7 @@ async function run() {
 
     //  post data SSLCommerz end  by Tonmoy -----------------------------------------------
 
-
-
-    // Real time Chat start by Tonmoy-------------------------------------------------------
+ // Real time Chat start by Tonmoy-------------------------------------------------------
 
 
    
@@ -840,6 +803,38 @@ async function run() {
 
 
     //  Real time Chat end by Tonmoy----------------------------------------------------------
+
+
+
+    //Old Books API started by AHAD
+
+app.post("/oldBooks", async (req, res) => {
+  const oldBook = req.body;
+  // console.log(oldBook);
+  const result = await oldBooksCollection.insertOne(oldBook);
+  res.send(result);
+});
+
+app.get("/oldBooks", async (req, res) => {
+  const result = await oldBooksCollection.find().toArray();
+  res.send(result);
+});
+
+app.get("/oldBook/:id", async (req, res) => {
+  const id = req.params.id;
+  const find = { _id: new ObjectId(id) };
+  const result = await oldBooksCollection.findOne(find);
+  res.send(result);
+});
+app.get("/myBooks", async (req, res) => {
+  const email = req.query.email;
+  console.log("email coming", email);
+  const query = { sellerMail: email };
+  const result = await oldBooksCollection.find(query).toArray();
+  res.send(result);
+});
+
+ //Old Books API end by AHAD
 
 
     // Send a ping to confirm a successful connection
