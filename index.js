@@ -369,7 +369,15 @@ async function run() {
           "Friday",
           "Saturday",
         ];
-        const weeklyRevenue = {};
+        const weeklyRevenue = {
+          Sunday: 0,
+          Monday: 0,
+          Tuesday: 0,
+          Wednesday: 0,
+          Thursday: 0,
+          Friday: 0,
+          Saturday: 0,
+        };
 
         payments.forEach((payment) => {
           const paymentDate = payment.date.split("T")[0];
@@ -395,9 +403,6 @@ async function run() {
             );
             const dayOfWeek = daysOfWeek[paymentDay.getDay()];
 
-            if (!weeklyRevenue[dayOfWeek]) {
-              weeklyRevenue[dayOfWeek] = 0;
-            }
             weeklyRevenue[dayOfWeek] += payment.total_price || 0;
           }
 
