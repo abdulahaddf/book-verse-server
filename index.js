@@ -61,9 +61,10 @@ async function run() {
     const allBooksCollections = database.collection("allBooks");
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
-    const bestSellingAndRecentSelling = database.collection(
-      "bestSellingAndRecentSelling"
-    );
+    const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
+    
+ 
+
 
     // jwt by nahid start
 
@@ -120,15 +121,33 @@ async function run() {
           return res.status(404).json({ message: "Book not found" });
         }
 
-        return res.json({
-          message: "Review added successfully",
-          book: updatedBook.value,
-        });
-      } catch (error) {
-        console.error("Error adding review:", error);
-        return res.status(500).json({ message: "An error occurred" });
-      }
-    });
+    return res.json({ message: 'Review added successfully', book: updatedBook.value });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    return res.status(500).json({ message: 'An error occurred' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // get single book by id  start by Tonmoy
 
@@ -149,6 +168,14 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/userinfo", async (req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result)
+    })
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -162,6 +189,25 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+    app.patch("/userinfoupdate", async (req, res) => {
+      const query = req.query.email;
+      const filter={email:query}
+      const userinfo = req.body;
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          displayName: userinfo.displayName,
+          photoURL: userinfo.photoURL,
+          address: userinfo.address,
+          gender: userinfo.gender,
+          birthday:userinfo.birthday
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+      console.log(result)
+    })
 
     app.delete("/users/:id", async (req, res) => {
       const id = req.params.id;
@@ -314,53 +360,41 @@ async function run() {
       res.send(result);
     });
 
-    // revenue start by Zihad----------------------------------
+    // revenue start----------------------------------
+    //example code-------------please don't uncomment
 
-    // weakly revenue for chart------ TODO CODE start--------------------
-
-    // app.get("/dailyRevenuePast7Days", async (req, res) => {
+    // app.get("/revenueSummary", async (req, res) => {
     //   try {
-    //     const currentDate = new Date();
-    //     currentDate.setHours(0, 0, 0, 0);
+    //     const currentDate = new Date().toISOString().split("T")[0];
 
-    //     const last7Days = new Array(7).fill(null).map((_, index) => {
-    //       const date = new Date(currentDate);
-    //       date.setDate(date.getDate() - index);
-    //       return date;
-    //     });
+    //     // Fetch daily payments
+    //     const dailyPayments = await paymentCollection.find({
+    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
+    //     }).toArray();
 
-    //     const dailyRevenueData = await Promise.all(
-    //       last7Days.map(async (date) => {
-    //         const startDate = new Date(date);
-    //         startDate.setHours(0, 0, 0, 0);
-
-    //         const endDate = new Date(date);
-    //         endDate.setHours(23, 59, 59, 999);
-
-    //         const dailyPayments = await paymentCollection
-    //           .find({
-    //             date: { $gte: startDate, $lte: endDate },
-    //             total_price: { $exists: true, $ne: null },
-    //           })
-    //           .toArray();
-
-    //         const totalRevenue = dailyPayments.reduce(
-    //           (total, payment) => total + (payment.total_price || 0),
-    //           0
-    //         );
-
-    //         return { date, totalRevenue };
-    //       })
+    //     // Calculate daily revenue
+    //     const dailyRevenue = dailyPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
     //     );
 
-    //     res.json(dailyRevenueData);
+    //     const totalPayments = await paymentCollection.find().toArray();
+
+    //     // Calculate total revenue
+    //     const totalRevenue = totalPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     res.json({
+    //       dailyRevenue,
+    //       totalRevenue
+    //     });
     //   } catch (error) {
     //     console.error("Error:", error);
     //     res.status(500).json({ error: "An error occurred" });
     //   }
     // });
-    
-    // weakly revenue for chart------ TODO CODE end--------------------
 
     app.get("/revenueSummary", async (req, res) => {
       try {
@@ -574,10 +608,19 @@ async function run() {
         res.redirect(`https://book-verse-endcoders.netlify.app`);
       });
 
-      //  payment cancel end
-    });
+//  payment cancel end
 
-    //  post data SSLCommerz end  by Tonmoy
+
+
+})
+
+
+
+
+//  post data SSLCommerz end  by Tonmoy 
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
