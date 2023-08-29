@@ -686,6 +686,12 @@ app.get("/myBooks", async (req, res) => {
   const result = await oldBooksCollection.find(query).toArray();
   res.send(result);
 });
+app.delete("/delete/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await oldBooksCollection.deleteOne(query);
+  res.send(result);
+});
 
 //Old Books API started by AHAD
 
