@@ -193,16 +193,31 @@ console.log(bookId);
 
     app.patch("/userinfoupdate", async (req, res) => {
       const query = req.query.email;
-      const filter={email:query}
+      const filter = { email: query };
       const userinfo = req.body;
       const options = { upsert: true };
       const updateDoc = {
         $set: {
           displayName: userinfo.displayName,
-          photoURL: userinfo.photoURL,
           address: userinfo.address,
           gender: userinfo.gender,
-          birthday:userinfo.birthday
+          birthday: userinfo.birthday,
+          phoneNumber:userinfo.phoneNumber
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+      console.log(result)
+    })
+    app.patch("/userpictureupdate", async (req, res) => {
+      console.log('server clicked')
+      const query = req.query.email;
+      const filter = { email: query };
+      const pitureinfo = req.body;
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          photoURL: pitureinfo.photoURL,
         }
       }
       const result = await usersCollection.updateOne(filter, updateDoc, options);
