@@ -11,26 +11,20 @@ const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 app.use(cors());
 app.use(express.json());
 
-const verifyJWT = (req, res, next) =>{
+const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
   if(!authorization){
     return res.status(401).send({error: true, message: 'unauthorized access'});
   }
-  const token = authorization.split(' ')[1];
+  const token = authorization.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if(err){
       return res.status(401).send({error: true, message: 'unauthorized access'});
     }
     req.decoded = decoded;
     next();
-  })
-}
-
-
-
-
-
-
+  });
+};
 
 // Data-Base start
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -45,14 +39,11 @@ const client = new MongoClient(uri, {
   },
 });
 
-
-
-
 // SSlCommerz id start key start Tonmoy
 
-const store_id = `${process.env.SSLCOMMERZ_ID}`
-const store_passwd = `${process.env.SSLCOMMERZ_PASSWORD}`
-const is_live = false //true for live, false for sandbox
+const store_id = `${process.env.SSLCOMMERZ_ID}`;
+const store_passwd = `${process.env.SSLCOMMERZ_PASSWORD}`;
+const is_live = false; //true for live, false for sandbox
 
 // SSlCommerz id end key end Tonmoy
 
@@ -66,15 +57,13 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
-    const oldBooksCollection = database.collection("oldBooks");
-
     
  
 
 
-    // jwt by nahid start 
+    // jwt by nahid start
 
-    app.post('/jwt', (req, res) => {
+    app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'1h'})
 
@@ -85,7 +74,7 @@ async function run() {
 
 
 
- // jwt by nahid end
+    // jwt by nahid end
 
     // get all books  start by Tonmoy
 
@@ -134,6 +123,24 @@ console.log(bookId);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // get single book by id  start by Tonmoy
 
     app.get("/singleBook/:id", async (req, res) => {
@@ -177,7 +184,7 @@ console.log(bookId);
 
     app.patch("/userinfoupdate", async (req, res) => {
       const query = req.query.email;
-      const filter={email:query}
+      const filter = { email: query }
       const userinfo = req.body;
       const options = { upsert: true };
       const updateDoc = {
@@ -186,7 +193,7 @@ console.log(bookId);
           photoURL: userinfo.photoURL,
           address: userinfo.address,
           gender: userinfo.gender,
-          birthday:userinfo.birthday
+          birthday: userinfo.birthday
         }
       }
       const result = await usersCollection.updateOne(filter, updateDoc, options);
@@ -222,7 +229,7 @@ console.log(bookId);
 
     app.patch('/users/admin/:id', async(req, res)=> {
       const id = req.params.id;
-      const filter = { _id: new ObjectId(id)};
+      const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set:{
           role: 'admin'
@@ -237,20 +244,16 @@ console.log(bookId);
 
  // make admin end by nahid 
 
-
-
-
-
-    //------------------ Post method start------------------
+    //------------------ Post method start by Zihad------------------
     app.post("/allBooks", async (req, res) => {
       const newBook = req.body;
       // console.log(newBook);
       const result = await allBooksCollections.insertOne(newBook);
       res.send(result);
     });
-    //------------------ Post method end------------------
+    //------------------ Post method end by Zihad------------------
 
-    //------------------ Update method end------------------
+    //------------------ Update method end by Zihad------------------
 
     app.put("/allBooks/:id", async (req, res) => {
       try {
@@ -295,16 +298,16 @@ console.log(bookId);
       }
     });
 
-    //------------------ Update method end------------------
+    //------------------ Update method end by Zihad------------------
 
-    //------------------ Delete method start------------------
+    //------------------ Delete method start by Zihad------------------
     app.delete("/allBooks/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await allBooksCollections.deleteOne(query);
       res.send(result);
     });
-    //------------------ Delete method end------------------
+    //------------------ Delete method end by Zihad------------------
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
@@ -357,111 +360,130 @@ console.log(bookId);
       res.send(result);
     });
 
+    // revenue start----------------------------------
+    //example code-------------please don't uncomment
+
+    // app.get("/revenueSummary", async (req, res) => {
+    //   try {
+    //     const currentDate = new Date().toISOString().split("T")[0];
+
+    //     // Fetch daily payments
+    //     const dailyPayments = await paymentCollection.find({
+    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
+    //     }).toArray();
+
+    //     // Calculate daily revenue
+    //     const dailyRevenue = dailyPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     const totalPayments = await paymentCollection.find().toArray();
+
+    //     // Calculate total revenue
+    //     const totalRevenue = totalPayments.reduce(
+    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
+    //       0
+    //     );
+
+    //     res.json({
+    //       dailyRevenue,
+    //       totalRevenue
+    //     });
+    //   } catch (error) {
+    //     console.error("Error:", error);
+    //     res.status(500).json({ error: "An error occurred" });
+    //   }
+    // });
 
     app.get("/revenueSummary", async (req, res) => {
       try {
-        const currentDate = new Date().toISOString().split("T")[0];
-
-        // Fetch daily payments
-        const dailyPayments = await paymentCollection
-          .find({
-            date: {
-              $gte: new Date(currentDate),
-              $lt: new Date(currentDate + "T23:59:59"),
-            },
-          })
-          .toArray();
-
-        // Calculate daily revenue
-        const dailyRevenue = dailyPayments.reduce(
-          (total, payment) => total + (payment.total_price || 0),
-          0
-        );
-
-        const totalPayments = await paymentCollection.find().toArray();
-
-        // Calculate total revenue
-        const totalRevenue = totalPayments.reduce(
-          (total, payment) => total + (payment.total_price || 0),
-          0
-        );
-
-        // Calculate monthly revenue for the current month
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth() + 1;
-        console.log("Current Year:", currentYear);
-        console.log("Current Month:", currentMonth);
-
-        const monthlyPayments = await paymentCollection
-          .find({
-            date: {
-              $regex: `-${currentYear}-${currentMonth
-                .toString()
-                .padStart(2, "0")}`,
-            },
-          })
-          .toArray();
-        console.log("Monthly Payments:", monthlyPayments);
-
-        const monthlyRevenue = monthlyPayments.reduce(
-          (total, payment) => total + (payment.total_price || 0),
-          0
-        );
-
+        const payments = await paymentCollection.find().toArray();
+    
+        const currentDate = new Date();
+        const todayDate = currentDate.toISOString().split("T")[0];
+    
+        let totalRevenue = 0;
+        let totalRevenueCurrentMonth = 0;
+        let totalRevenueToday = 0;
+    
+        payments.forEach((payment) => {
+          const paymentDate = payment.date.split("T")[0];
+    
+          if (paymentDate === todayDate) {
+            totalRevenueToday += payment.total_price || 0;
+          }
+    
+          const [year, month] = paymentDate.split("-");
+          const paymentYear = parseInt(year);
+          const paymentMonth = parseInt(month);
+    
+          if (
+            paymentYear === currentDate.getFullYear() &&
+            paymentMonth === currentDate.getMonth() + 1
+          ) {
+            totalRevenueCurrentMonth += payment.total_price || 0;
+          }
+    
+          totalRevenue += payment.total_price || 0;
+        });
+    
         res.json({
-          dailyRevenue,
-          totalRevenue,
-          monthlyRevenue,
+          totalRevenueToday: totalRevenueToday.toFixed(2),
+          totalRevenueCurrentMonth: totalRevenueCurrentMonth.toFixed(2),
+          totalRevenue: totalRevenue.toFixed(2),
         });
       } catch (error) {
         console.error("Error:", error);
-        res.status(500).json({ error: "An error occurred" });
+        res.status(500).json({ error: "Internal Server Error" });
       }
     });
+    
+    
 
     // weakly revenue for chart------ TODO CODE start--------------------
 
-    app.get("/dailyRevenuePast7Days", async (req, res) => {
-      try {
-        const currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0);
+    // app.get("/dailyRevenuePast7Days", async (req, res) => {
+    //   try {
+    //     const currentDate = new Date();
+    //     currentDate.setHours(0, 0, 0, 0);
     
-        const last7Days = new Array(7).fill(null).map((_, index) => {
-          const date = new Date(currentDate);
-          date.setDate(date.getDate() - index);
-          return date;
-        });
+    //     const last7Days = new Array(7).fill(null).map((_, index) => {
+    //       const date = new Date(currentDate);
+    //       date.setDate(date.getDate() - index);
+    //       return date;
+    //     });
     
-        const dailyRevenueData = await Promise.all(
-          last7Days.map(async (date) => {
-            const startDate = new Date(date);
-            startDate.setHours(0, 0, 0, 0);
+    //     const dailyRevenueData = await Promise.all(
+    //       last7Days.map(async (date) => {
+    //         const startDate = new Date(date);
+    //         startDate.setHours(0, 0, 0, 0);
     
-            const endDate = new Date(date);
-            endDate.setHours(23, 59, 59, 999);
+    //         const endDate = new Date(date);
+    //         endDate.setHours(23, 59, 59, 999);
     
-            const dailyPayments = await paymentCollection
-              .find({
-                date: { $gte: startDate, $lte: endDate },
-                total_price: { $exists: true, $ne: null },
-              })
-              .toArray();
+    //         const dailyPayments = await paymentCollection
+    //           .find({
+    //             date: { $gte: startDate, $lte: endDate },
+    //             total_price: { $exists: true, $ne: null },
+    //           })
+    //           .toArray();
     
-            const totalRevenue = dailyPayments.reduce(
-              (total, payment) => total + (payment.total_price || 0),
-              0
-            );
+    //         const totalRevenue = dailyPayments.reduce(
+    //           (total, payment) => total + (payment.total_price || 0),
+    //           0
+    //         );
     
-            return { date, totalRevenue };
-          })
-        );
+    //         return { date, totalRevenue };
+    //       })
+    //     );
     
-        res.json(dailyRevenueData);
-      } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: "An error occurred" });
-      }
-    });
+    //     res.json(dailyRevenueData);
+    //   } catch (error) {
+    //     console.error("Error:", error);
+    //     res.status(500).json({ error: "An error occurred" });
+    //   }
+    // });
     // weakly revenue for chart------ TODO CODE end--------------------
     // revenue end----------------------------------
 
@@ -558,7 +580,7 @@ app.post('/order',async(req,res)=>{
 
   const info= req.body;
 
-  // console.log(info)
+      // console.log(info)
 
   const random_id= new ObjectId().toString()
   const data = {
@@ -627,7 +649,7 @@ const result = await paymentCollection.insertOne(payment_details)
 //  payment success end
 
 
-//  payment  fail stat
+      //  payment  fail stat
 
   app.post('/payment/fail',async(req,res)=>{
 
@@ -637,9 +659,9 @@ const result = await paymentCollection.insertOne(payment_details)
   })
 
 
-//  payment fail end
+      //  payment fail end
 
-//  payment  cancel stat
+      //  payment  cancel stat
 
   app.post('/payment/cancel',async(req,res)=>{
 
@@ -649,14 +671,145 @@ const result = await paymentCollection.insertOne(payment_details)
   })
 
 
-//  payment cancel end
+      //  payment cancel end
 
 
 
 })
 
 
-//  post data SSLCommerz end  by Tonmoy 
+    //  post data SSLCommerz end  by Tonmoy -----------------------------------------------
+
+ // Real time Chat start by Tonmoy-------------------------------------------------------
+
+
+   
+    // post chat
+    app.post('/postChat', async (req, res) => {
+
+
+      const email= req?.query?.email;
+
+      const chat= req.body
+       
+      const options = { upsert: true };
+
+       
+
+
+
+      const filter = { email: email };
+
+      
+
+
+      const updateDoc = {
+        $set: {
+          chat: chat
+        },
+      };
+
+      const update= await usersCollection.updateOne(filter, updateDoc);
+
+
+     
+
+     res.send(update)
+  
+  
+  })
+
+
+
+
+    // get userdata
+    app.get('/userData', async (req, res) => {
+
+
+      const email=req?.query?.email
+   
+      
+       
+
+      const result = await usersCollection.findOne({email: email})
+
+    
+
+      if(!result){
+
+        return res.send({nei:'nei'})
+      }
+
+      res.send(result)
+
+    })
+
+
+  
+
+
+    // alluser data
+    app.get('/allUserData', async (req, res) => {
+
+
+    
+   
+      
+        
+
+      const result = await usersCollection.find().toArray()
+
+      // console.log(result)
+
+     
+
+      res.send(result)
+
+    });
+
+    // get single user by email
+
+    app.get('/singleUserDataByEmail/:email', async (req, res) => {
+
+
+    
+       const email= req?.params?.email
+      
+        
+
+      const result = await usersCollection.findOne({email:email})
+
+      // console.log(result)
+
+     
+
+      res.send(result)
+
+    });
+   
+
+
+    app.get('/singleUserData/:id', async (req, res) => {
+      const id = req?.params?.id;
+     
+      try {
+          const objectId = new ObjectId(id);
+         
+          const result = await usersCollection.findOne({ _id: objectId });
+          res.send(result);
+      } catch (error) {
+          console.error('Error creating ObjectId:', error);
+          res.status(400).send('Invalid ID format');
+      }
+  });
+  
+
+
+
+
+
+    //  Real time Chat end by Tonmoy----------------------------------------------------------
+
 
 
 //Old Books API started by AHAD
