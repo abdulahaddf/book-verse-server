@@ -929,7 +929,7 @@ app.delete("/delete/:id", async (req, res) => {
   res.send(result);
 });
 
-//Old Books API started by AHAD
+//Old Books API end by AHAD
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
