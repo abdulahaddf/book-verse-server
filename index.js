@@ -66,15 +66,15 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
-    
- 
+
+
 
 
     // jwt by nahid start 
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'7d'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
 
       res.send({ token })
     })
@@ -122,12 +122,12 @@ async function run() {
           return res.status(404).json({ message: 'Book not found' });
         }
 
-    return res.json({ message: 'Review added successfully', book: updatedBook.value });
-  } catch (error) {
-    console.error('Error adding review:', error);
-    return res.status(500).json({ message: 'An error occurred' });
-  }
-});
+        return res.json({ message: 'Review added successfully', book: updatedBook.value });
+      } catch (error) {
+        console.error('Error adding review:', error);
+        return res.status(500).json({ message: 'An error occurred' });
+      }
+    });
 
 
 
@@ -674,44 +674,74 @@ async function run() {
 
     //  post data SSLCommerz end  by Tonmoy -----------------------------------------------
 
- // Real time Chat start by Tonmoy-------------------------------------------------------
+    // Real time Chat start by Tonmoy-------------------------------------------------------
 
 
-   
+
     // post chat
     app.post('/postChat', async (req, res) => {
 
 
-      const email= req?.query?.email;
+      // const email = req?.query?.email;
 
-      const chat= req.body
-       
-      const options = { upsert: true };
+      // const chat = req.body
 
-       
+      // const options = { upsert: true };
 
 
 
-      const filter = { email: email };
-
-      
 
 
-      const updateDoc = {
-        $set: {
-          chat: chat
-        },
-      };
-
-      const update= await usersCollection.updateOne(filter, updateDoc);
+      // const filter = { email: email };
 
 
-     
 
-     res.send(update)
-  
-  
-  })
+
+      // const updateDoc = {
+      //   $set: {
+      //     chat: chat
+      //   },
+      // };
+
+      // const update = await usersCollection.updateOne(filter, updateDoc);
+
+
+
+
+      // res.send(update)
+
+
+      try {
+        const email = req?.query?.email;
+        const chat = req.body;
+    
+        if (!email) {
+          return res.status(400).send('Email parameter is missing');
+        }
+    
+        const filter = { email: email };
+        const updateDoc = {
+          $set: {
+            chat: chat,
+          },
+        };
+    
+        const options = { upsert: true };
+    
+        const updateResult = await usersCollection.updateOne(filter, updateDoc, options);
+    
+        if (updateResult.matchedCount === 0 && updateResult.upsertedCount === 0) {
+          return res.status(404).send('User not found');
+        }
+    
+        res.send(updateResult);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('An error occurred');
+      }
+
+
+    })
 
 
 
@@ -720,44 +750,64 @@ async function run() {
     app.get('/userData', async (req, res) => {
 
 
-      const email=req?.query?.email
-   
-      
-       
+      // const email = req?.query?.email
 
-      const result = await usersCollection.findOne({email: email})
 
-    
 
-      if(!result){
 
-        return res.send({nei:'nei'})
+      // const result = await usersCollection.findOne({ email: email })
+
+
+
+      // if (!result) {
+
+      //   return res.send({ nei: 'nei' })
+      // }
+
+      // res.send(result)
+
+
+
+      const email = req?.query?.email; 
+  
+      try {
+        if (!email) {
+          return res.status(400).send('Email parameter is missing');
+        }
+        
+        const result = await usersCollection.findOne({ email: email }); 
+        
+        if (!result) {
+          return res.send({ nei: 'nei' });
+        }
+        
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('An error occurred');
       }
-
-      res.send(result)
 
     })
 
 
-  
+
 
 
     // alluser data
     app.get('/allUserData', async (req, res) => {
 
 
-    
-   
-      
-        
+      // const result = await usersCollection.find().toArray()
 
-      const result = await usersCollection.find().toArray()
+      // res.send(result)
 
-      // console.log(result)
-
-     
-
-      res.send(result)
+      try {
+        const result = await usersCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('An error occurred');
+      }
 
     });
 
@@ -766,37 +816,53 @@ async function run() {
     app.get('/singleUserDataByEmail/:email', async (req, res) => {
 
 
-    
-       const email= req?.params?.email
-      
-        
 
-      const result = await usersCollection.findOne({email:email})
+      //  const email= req?.params?.email
 
-      // console.log(result)
 
-     
 
-      res.send(result)
+      // const result = await usersCollection.findOne({email:email})
+
+
+
+
+
+      // res.send(result)
+
+
+      try {
+
+        const email = req.params.email;
+
+
+        const result = await usersCollection.findOne({ email: email });
+
+
+        res.send(result);
+      } catch (error) {
+
+        console.error("Error:", error);
+        res.status(500).send("An error occurred while fetching user data.");
+      }
 
     });
-   
+
 
 
     app.get('/singleUserData/:id', async (req, res) => {
       const id = req?.params?.id;
-     
+
       try {
-          const objectId = new ObjectId(id);
-         
-          const result = await usersCollection.findOne({ _id: objectId });
-          res.send(result);
+        const objectId = new ObjectId(id);
+
+        const result = await usersCollection.findOne({ _id: objectId });
+        res.send(result);
       } catch (error) {
-          console.error('Error creating ObjectId:', error);
-          res.status(400).send('Invalid ID format');
+        console.error('Error creating ObjectId:', error);
+        res.status(400).send('Invalid ID format');
       }
-  });
-  
+    });
+
 
 
 
@@ -808,33 +874,33 @@ async function run() {
 
     //Old Books API started by AHAD
 
-app.post("/oldBooks", async (req, res) => {
-  const oldBook = req.body;
-  // console.log(oldBook);
-  const result = await oldBooksCollection.insertOne(oldBook);
-  res.send(result);
-});
+    app.post("/oldBooks", async (req, res) => {
+      const oldBook = req.body;
+      // console.log(oldBook);
+      const result = await oldBooksCollection.insertOne(oldBook);
+      res.send(result);
+    });
 
-app.get("/oldBooks", async (req, res) => {
-  const result = await oldBooksCollection.find().toArray();
-  res.send(result);
-});
+    app.get("/oldBooks", async (req, res) => {
+      const result = await oldBooksCollection.find().toArray();
+      res.send(result);
+    });
 
-app.get("/oldBook/:id", async (req, res) => {
-  const id = req.params.id;
-  const find = { _id: new ObjectId(id) };
-  const result = await oldBooksCollection.findOne(find);
-  res.send(result);
-});
-app.get("/myBooks", async (req, res) => {
-  const email = req.query.email;
-  console.log("email coming", email);
-  const query = { sellerMail: email };
-  const result = await oldBooksCollection.find(query).toArray();
-  res.send(result);
-});
+    app.get("/oldBook/:id", async (req, res) => {
+      const id = req.params.id;
+      const find = { _id: new ObjectId(id) };
+      const result = await oldBooksCollection.findOne(find);
+      res.send(result);
+    });
+    app.get("/myBooks", async (req, res) => {
+      const email = req.query.email;
+      console.log("email coming", email);
+      const query = { sellerMail: email };
+      const result = await oldBooksCollection.find(query).toArray();
+      res.send(result);
+    });
 
- //Old Books API end by AHAD
+    //Old Books API end by AHAD
 
 
     // Send a ping to confirm a successful connection
