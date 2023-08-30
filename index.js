@@ -377,132 +377,81 @@ console.log(bookId);
       res.send(result);
     });
 
-    // revenue start----------------------------------
-    //example code-------------please don't uncomment
-
-    // app.get("/revenueSummary", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date().toISOString().split("T")[0];
-
-    //     // Fetch daily payments
-    //     const dailyPayments = await paymentCollection.find({
-    //       date: { $gte: new Date(currentDate), $lt: new Date(currentDate + "T23:59:59") },
-    //     }).toArray();
-
-    //     // Calculate daily revenue
-    //     const dailyRevenue = dailyPayments.reduce(
-    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
-    //       0
-    //     );
-
-    //     const totalPayments = await paymentCollection.find().toArray();
-
-    //     // Calculate total revenue
-    //     const totalRevenue = totalPayments.reduce(
-    //       (total, payment) => total + (payment.total_price || 0), // Handle missing or null total_price
-    //       0
-    //     );
-
-    //     res.json({
-    //       dailyRevenue,
-    //       totalRevenue
-    //     });
-    //   } catch (error) {
-    //     console.error("Error:", error);
-    //     res.status(500).json({ error: "An error occurred" });
-    //   }
-    // });
+    // revenue start by Zihad----------------------------------
 
     app.get("/revenueSummary", async (req, res) => {
       try {
         const payments = await paymentCollection.find().toArray();
-    
+
         const currentDate = new Date();
         const todayDate = currentDate.toISOString().split("T")[0];
-    
+
         let totalRevenue = 0;
         let totalRevenueCurrentMonth = 0;
         let totalRevenueToday = 0;
-    
+
+        const daysOfWeek = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+        const weeklyRevenue = {
+          Sunday: 0,
+          Monday: 0,
+          Tuesday: 0,
+          Wednesday: 0,
+          Thursday: 0,
+          Friday: 0,
+          Saturday: 0,
+        };
+
         payments.forEach((payment) => {
           const paymentDate = payment.date.split("T")[0];
-    
+
           if (paymentDate === todayDate) {
             totalRevenueToday += payment.total_price || 0;
           }
-    
+
           const [year, month] = paymentDate.split("-");
           const paymentYear = parseInt(year);
           const paymentMonth = parseInt(month);
-    
+
           if (
             paymentYear === currentDate.getFullYear() &&
             paymentMonth === currentDate.getMonth() + 1
           ) {
             totalRevenueCurrentMonth += payment.total_price || 0;
+
+            const paymentDay = new Date(
+              paymentYear,
+              paymentMonth - 1,
+              parseInt(paymentDate.split("-")[2])
+            );
+            const dayOfWeek = daysOfWeek[paymentDay.getDay()];
+
+            weeklyRevenue[dayOfWeek] += payment.total_price || 0;
           }
-    
+
           totalRevenue += payment.total_price || 0;
         });
-    
+
         res.json({
           totalRevenueToday: totalRevenueToday.toFixed(2),
           totalRevenueCurrentMonth: totalRevenueCurrentMonth.toFixed(2),
           totalRevenue: totalRevenue.toFixed(2),
+          weeklyRevenue,
         });
       } catch (error) {
         console.error("Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
-    
-    
 
-    // weakly revenue for chart------ TODO CODE start--------------------
-
-    // app.get("/dailyRevenuePast7Days", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date();
-    //     currentDate.setHours(0, 0, 0, 0);
-    
-    //     const last7Days = new Array(7).fill(null).map((_, index) => {
-    //       const date = new Date(currentDate);
-    //       date.setDate(date.getDate() - index);
-    //       return date;
-    //     });
-    
-    //     const dailyRevenueData = await Promise.all(
-    //       last7Days.map(async (date) => {
-    //         const startDate = new Date(date);
-    //         startDate.setHours(0, 0, 0, 0);
-    
-    //         const endDate = new Date(date);
-    //         endDate.setHours(23, 59, 59, 999);
-    
-    //         const dailyPayments = await paymentCollection
-    //           .find({
-    //             date: { $gte: startDate, $lte: endDate },
-    //             total_price: { $exists: true, $ne: null },
-    //           })
-    //           .toArray();
-    
-    //         const totalRevenue = dailyPayments.reduce(
-    //           (total, payment) => total + (payment.total_price || 0),
-    //           0
-    //         );
-    
-    //         return { date, totalRevenue };
-    //       })
-    //     );
-    
-    //     res.json(dailyRevenueData);
-    //   } catch (error) {
-    //     console.error("Error:", error);
-    //     res.status(500).json({ error: "An error occurred" });
-    //   }
-    // });
-    // weakly revenue for chart------ TODO CODE end--------------------
-    // revenue end----------------------------------
+    // revenue end by Zihad----------------------------------
 
 
     // post  best selling & recent selling start by tonmoy
