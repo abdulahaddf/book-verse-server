@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const jwt = require('jsonwebtoken');const SSLCommerzPayment = require('sslcommerz-lts')
+const jwt = require('jsonwebtoken'); const SSLCommerzPayment = require('sslcommerz-lts')
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -13,13 +13,13 @@ app.use(express.json());
 
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-  if(!authorization){
-    return res.status(401).send({error: true, message: 'unauthorized access'});
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: 'unauthorized access' });
   }
   const token = authorization.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if(err){
-      return res.status(401).send({error: true, message: 'unauthorized access'});
+    if (err) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' });
     }
     req.decoded = decoded;
     next();
@@ -56,7 +56,7 @@ async function run() {
     const allBooksCollections = database.collection("allBooks");
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
-    const oldBooksCollection=database.collection("oldBooks");
+    const oldBooksCollection = database.collection("oldBooks");
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
 
 
@@ -68,7 +68,7 @@ async function run() {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
 
-      res.send({token})
+      res.send({ token })
     })
 
 
@@ -87,32 +87,32 @@ async function run() {
     // get all books  end by Tonmoy
 
 
-//review api
-app.post('/add-review', async (req, res) => {
-  const { bookId, name, photo, rating, review, identifier,postDate } = req.body;
-console.log(bookId);
-  try {
-    const existingReview = await allBooksCollections.findOne({
-     
-      $and: [
-        { _id: new ObjectId(bookId) },
-        { 'review.identifier': identifier }
-      ]
-    });
+    //review api
+    app.post('/add-review', async (req, res) => {
+      const { bookId, name, photo, rating, review, identifier, postDate } = req.body;
+      console.log(bookId);
+      try {
+        const existingReview = await allBooksCollections.findOne({
 
-    if (existingReview) {
-      return res.status(400).json({ message: 'You have already reviewed this book' });
-    }
+          $and: [
+            { _id: new ObjectId(bookId) },
+            { 'review.identifier': identifier }
+          ]
+        });
 
-    const updatedBook = await allBooksCollections.findOneAndUpdate(
-      { _id: new ObjectId(bookId) },
-      { $push: { review: { name, photo, rating, review, identifier,postDate } } },
-      { returnOriginal: false }
-    );
+        if (existingReview) {
+          return res.status(400).json({ message: 'You have already reviewed this book' });
+        }
 
-    if (!updatedBook.value) {
-      return res.status(404).json({ message: 'Book not found' });
-    }
+        const updatedBook = await allBooksCollections.findOneAndUpdate(
+          { _id: new ObjectId(bookId) },
+          { $push: { review: { name, photo, rating, review, identifier, postDate } } },
+          { returnOriginal: false }
+        );
+
+        if (!updatedBook.value) {
+          return res.status(404).json({ message: 'Book not found' });
+        }
 
         return res.json({ message: 'Review added successfully', book: updatedBook.value });
       } catch (error) {
@@ -195,7 +195,7 @@ console.log(bookId);
           address: userinfo.address,
           gender: userinfo.gender,
           birthday: userinfo.birthday,
-          phoneNumber:userinfo.phoneNumber
+          phoneNumber: userinfo.phoneNumber
         }
       }
       const result = await usersCollection.updateOne(filter, updateDoc, options);
@@ -219,37 +219,37 @@ console.log(bookId);
     })
 
 
-    app.delete('/users/:id', async(req, res) => {
+    app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await usersCollection.deleteOne(query)
       res.send(result)
     })
 
 
     // make admin start by nahid 
-    app.get('/users/admin/:email',verifyJWT, async(req, res) => {
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
-      if(req.decoded.email !== email){
-       return  res.send({admin: false})
+      if (req.decoded.email !== email) {
+        return res.send({ admin: false })
       }
       console.log(req.decoded.email)
       console.log(email)
-      const query = {email: email}
+      const query = { email: email }
       const user = await usersCollection.findOne(query);
-      const result = {admin: user?.role === 'admin'}
+      const result = { admin: user?.role === 'admin' }
       res.send(result)
     })
 
-    
 
 
 
-    app.patch('/users/admin/:id', async(req, res)=> {
+
+    app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
-        $set:{
+        $set: {
           role: 'admin'
         }
       }
@@ -257,10 +257,10 @@ console.log(bookId);
       res.send(result)
     })
 
-    
 
 
- // make admin end by nahid 
+
+    // make admin end by nahid 
 
     //------------------ Post method start by Zihad------------------
     app.post("/allBooks", async (req, res) => {
@@ -458,34 +458,34 @@ console.log(bookId);
     app.get("/monthlyRevenue", async (req, res) => {
       try {
         const payments = await paymentCollection.find().toArray();
-        
-        const monthlyRevenue = Array.from({ length: 12 }).map(() => 0); 
+
+        const monthlyRevenue = Array.from({ length: 12 }).map(() => 0);
 
         payments.forEach((payment) => {
           const paymentDate = new Date(payment.date);
           const paymentMonth = paymentDate.getMonth();
-    
+
           const totalPayment = payment.total_price || 0;
           monthlyRevenue[paymentMonth] += totalPayment;
         });
-    
+
         const months = [
           "January", "February", "March", "April", "May", "June",
           "July", "August", "September", "October", "November", "December"
         ];
-    
+
         const formattedMonthlyRevenue = monthlyRevenue.map((revenue, index) => ({
           month: months[index],
           revenue: revenue.toFixed(2)
         }));
-    
+
         res.json(formattedMonthlyRevenue);
       } catch (error) {
         console.error("Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
-    
+
     // monthly revenue end by Zihad----------------------------------
 
     // daily revenue start by Zihad----------------------------------
@@ -495,52 +495,52 @@ console.log(bookId);
       "May", "June", "July", "August",
       "September", "October", "November", "December"
     ];
-    
+
     app.get("/dailyRevenue", async (req, res) => {
       try {
         const payments = await paymentCollection.find().toArray();
-    
+
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth();
-    
+
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
+
         let dailyRevenue = {};
-    
+
         payments.forEach((payment) => {
           const paymentDate = payment.date.split("T")[0];
           const [paymentYear, paymentMonth, paymentDay] = paymentDate.split("-");
-          
+
           if (parseInt(paymentYear) === currentYear && parseInt(paymentMonth) === currentMonth + 1) {
             const dayOfMonth = parseInt(paymentDay);
             const totalPayment = payment.total_price || 0;
-            
+
             if (!dailyRevenue[dayOfMonth]) {
               dailyRevenue[dayOfMonth] = 0;
             }
-            
+
             dailyRevenue[dayOfMonth] += totalPayment;
           }
         });
-    
+
         const formattedDailyRevenue = [];
-    
+
         for (let day = 1; day <= daysInMonth; day++) {
           formattedDailyRevenue.push({
             date: `${months[currentMonth]} ${day}`,
             revenue: (dailyRevenue[day] || 0).toFixed(2)
           });
         }
-    
+
         res.json({ dailyRevenue: formattedDailyRevenue });
       } catch (error) {
         console.error("Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
-    
-    
+
+
     // daily revenue end by Zihad----------------------------------
 
 
@@ -619,119 +619,119 @@ console.log(bookId);
 
 
 
-//find purchased books
-app.get("/purchased", async (req, res) => {
-  const email = req.query.email;
-  // console.log(email);
-  const query = { mail: email };
-  const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
-  res.send(result);
-});
+    //find purchased books
+    app.get("/purchased", async (req, res) => {
+      const email = req.query.email;
+      // console.log(email);
+      const query = { mail: email };
+      const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+      res.send(result);
+    });
 
 
 
-//  post data SSLCommerz start  by Tonmoy 
+    //  post data SSLCommerz start  by Tonmoy 
 
-app.post('/order',async(req,res)=>{
+    app.post('/order', async (req, res) => {
 
-  const info= req.body;
+      const info = req.body;
 
       // console.log(info)
 
-  const random_id= new ObjectId().toString()
-  const data = {
-    total_amount: info?.price,
-    currency: 'BDT',
-    tran_id: random_id, // use unique tran_id for each api call
-    success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
-    fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
-    cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
-    ipn_url: 'http://localhost:3030/ipn',
-    shipping_method: 'Courier',
-    product_name: 'Computer.',
-    product_category: 'Electronic',
-    product_profile: 'general',
-    cus_name: info?.name,
-    cus_email: info?.email,
-    cus_add1: 'Dhaka',
-    cus_add2: 'Dhaka',
-    cus_city: 'Dhaka',
-    cus_state: 'Dhaka',
-    cus_postcode: '1000',
-    cus_country: 'Bangladesh',
-    cus_phone: '01711111111',
-    cus_fax: '01711111111',
-    ship_name: 'Customer Name',
-    ship_add1: 'Dhaka',
-    ship_add2: 'Dhaka',
-    ship_city: 'Dhaka',
-    ship_state: 'Dhaka',
-    ship_postcode: 1000,
-    ship_country: 'Bangladesh',
-};
-const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
-sslcz.init(data).then(apiResponse => {
-    // Redirect the user to payment gateway
-    let GatewayPageURL = apiResponse.GatewayPageURL
-    res.send({url:GatewayPageURL})
-    // console.log('Redirecting to: ', GatewayPageURL)
-});
+      const random_id = new ObjectId().toString()
+      const data = {
+        total_amount: info?.price,
+        currency: 'BDT',
+        tran_id: random_id, // use unique tran_id for each api call
+        success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
+        fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
+        cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
+        ipn_url: 'http://localhost:3030/ipn',
+        shipping_method: 'Courier',
+        product_name: 'Computer.',
+        product_category: 'Electronic',
+        product_profile: 'general',
+        cus_name: info?.name,
+        cus_email: info?.email,
+        cus_add1: 'Dhaka',
+        cus_add2: 'Dhaka',
+        cus_city: 'Dhaka',
+        cus_state: 'Dhaka',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: '01711111111',
+        cus_fax: '01711111111',
+        ship_name: 'Customer Name',
+        ship_add1: 'Dhaka',
+        ship_add2: 'Dhaka',
+        ship_city: 'Dhaka',
+        ship_state: 'Dhaka',
+        ship_postcode: 1000,
+        ship_country: 'Bangladesh',
+      };
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+      sslcz.init(data).then(apiResponse => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL
+        res.send({ url: GatewayPageURL })
+        // console.log('Redirecting to: ', GatewayPageURL)
+      });
 
-//  payment success start
-app.post('/payment/success/:id',async(req,res)=>{
+      //  payment success start
+      app.post('/payment/success/:id', async (req, res) => {
 
- const tran_id=req.params.id
-  
-  const payment_details={
-    transactionId:tran_id,
-    mail: info?.email,
-    date:info?.date,
-    books: [...info?.books],
-    total_price: info?.price,
-    name:info?.name
-    
-  }
+        const tran_id = req.params.id
 
-const result = await paymentCollection.insertOne(payment_details)
+        const payment_details = {
+          transactionId: tran_id,
+          mail: info?.email,
+          date: info?.date,
+          books: [...info?.books],
+          total_price: info?.price,
+          name: info?.name
 
-  
+        }
 
-  if(result.insertedId){
-    res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
-  }
+        const result = await paymentCollection.insertOne(payment_details)
 
- 
-});
-//  payment success end
+
+
+        if (result.insertedId) {
+          res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
+        }
+
+
+      });
+      //  payment success end
 
 
       //  payment  fail stat
 
-  app.post('/payment/fail',async(req,res)=>{
+      app.post('/payment/fail', async (req, res) => {
 
 
-    res.redirect(`https://book-verse-endcoders.netlify.app`)
+        res.redirect(`https://book-verse-endcoders.netlify.app`)
 
-  })
+      })
 
 
       //  payment fail end
 
       //  payment  cancel stat
 
-  app.post('/payment/cancel',async(req,res)=>{
+      app.post('/payment/cancel', async (req, res) => {
 
 
-    res.redirect(`https://book-verse-endcoders.netlify.app`)
+        res.redirect(`https://book-verse-endcoders.netlify.app`)
 
-  })
+      })
 
 
       //  payment cancel end
 
 
 
-})
+    })
 
 
     //  post data SSLCommerz end  by Tonmoy -----------------------------------------------
@@ -776,26 +776,26 @@ const result = await paymentCollection.insertOne(payment_details)
       try {
         const email = req?.query?.email;
         const chat = req.body;
-    
+
         if (!email) {
           return res.status(400).send('Email parameter is missing');
         }
-    
+
         const filter = { email: email };
         const updateDoc = {
           $set: {
             chat: chat,
           },
         };
-    
+
         const options = { upsert: true };
-    
+
         const updateResult = await usersCollection.updateOne(filter, updateDoc, options);
-    
+
         if (updateResult.matchedCount === 0 && updateResult.upsertedCount === 0) {
           return res.status(404).send('User not found');
         }
-    
+
         res.send(updateResult);
       } catch (error) {
         console.error('Error:', error);
@@ -803,8 +803,49 @@ const result = await paymentCollection.insertOne(payment_details)
       }
 
 
-    })
+    });
 
+    // chat Action
+    app.post('/chatAction', async (req, res) => {
+      try {
+        const email = req?.query?.email;
+        const cancel = 'cancel';
+
+        
+
+        if (!email) {
+          return res.status(400).send('Email parameter is missing');
+        }
+
+       
+        const userDocument = await usersCollection.findOne({ email });
+
+        if (!userDocument) {
+          return res.status(404).send('User not found');
+        }
+
+        const lastMessageIndex = userDocument.chat.length - 1;
+
+        
+        const filter = { email };
+        const updateDoc = {
+          $set: {
+            [`chat.${lastMessageIndex}.action`]: cancel
+          }
+        };
+
+        const updateResult = await usersCollection.updateOne(filter, updateDoc);
+
+        if (updateResult.matchedCount === 0) {
+          return res.status(404).send('User not found');
+        }
+
+        res.send(updateResult);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('An error occurred');
+      }
+    });
 
 
 
@@ -830,19 +871,19 @@ const result = await paymentCollection.insertOne(payment_details)
 
 
 
-      const email = req?.query?.email; 
-  
+      const email = req?.query?.email;
+
       try {
         if (!email) {
           return res.status(400).send('Email parameter is missing');
         }
-        
-        const result = await usersCollection.findOne({ email: email }); 
-        
+
+        const result = await usersCollection.findOne({ email: email });
+
         if (!result) {
           return res.send({ nei: 'nei' });
         }
-        
+
         res.send(result);
       } catch (error) {
         console.error('Error:', error);
@@ -934,7 +975,7 @@ const result = await paymentCollection.insertOne(payment_details)
 
 
 
-//Old Books API started by AHAD
+    //Old Books API started by AHAD
 
     app.post("/oldBooks", async (req, res) => {
       const oldBook = req.body;
@@ -948,27 +989,27 @@ const result = await paymentCollection.insertOne(payment_details)
       res.send(result);
     });
 
-app.get("/oldBook/:id", async (req, res) => {
-  const id = req.params.id;
-  const find = { _id: new ObjectId(id) };
-  const result = await oldBooksCollection.findOne(find);
-  res.send(result);
-});
-app.get("/myBooks", async (req, res) => {
-  const email = req.query.email;
-  console.log("email coming", email);
-  const query = { sellerMail: email };
-  const result = await oldBooksCollection.find(query).toArray();
-  res.send(result);
-});
-app.delete("/delete/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) };
-  const result = await oldBooksCollection.deleteOne(query);
-  res.send(result);
-});
+    app.get("/oldBook/:id", async (req, res) => {
+      const id = req.params.id;
+      const find = { _id: new ObjectId(id) };
+      const result = await oldBooksCollection.findOne(find);
+      res.send(result);
+    });
+    app.get("/myBooks", async (req, res) => {
+      const email = req.query.email;
+      console.log("email coming", email);
+      const query = { sellerMail: email };
+      const result = await oldBooksCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.delete("/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await oldBooksCollection.deleteOne(query);
+      res.send(result);
+    });
 
-//Old Books API end by AHAD
+    //Old Books API end by AHAD
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
