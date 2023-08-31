@@ -452,6 +452,95 @@ console.log(bookId);
     });
 
     // revenue end by Zihad----------------------------------
+    // monthly revenue start by Zihad----------------------------------
+
+    app.get("/monthlyRevenue", async (req, res) => {
+      try {
+        const payments = await paymentCollection.find().toArray();
+        
+        const monthlyRevenue = Array.from({ length: 12 }).map(() => 0); 
+
+        payments.forEach((payment) => {
+          const paymentDate = new Date(payment.date);
+          const paymentMonth = paymentDate.getMonth();
+    
+          const totalPayment = payment.total_price || 0;
+          monthlyRevenue[paymentMonth] += totalPayment;
+        });
+    
+        const months = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+    
+        const formattedMonthlyRevenue = monthlyRevenue.map((revenue, index) => ({
+          month: months[index],
+          revenue: revenue.toFixed(2)
+        }));
+    
+        res.json(formattedMonthlyRevenue);
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+    
+    // monthly revenue end by Zihad----------------------------------
+
+    // daily revenue start by Zihad----------------------------------
+
+    const months = [
+      "January", "February", "March", "April",
+      "May", "June", "July", "August",
+      "September", "October", "November", "December"
+    ];
+    
+    app.get("/dailyRevenue", async (req, res) => {
+      try {
+        const payments = await paymentCollection.find().toArray();
+    
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth();
+    
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+        let dailyRevenue = {};
+    
+        payments.forEach((payment) => {
+          const paymentDate = payment.date.split("T")[0];
+          const [paymentYear, paymentMonth, paymentDay] = paymentDate.split("-");
+          
+          if (parseInt(paymentYear) === currentYear && parseInt(paymentMonth) === currentMonth + 1) {
+            const dayOfMonth = parseInt(paymentDay);
+            const totalPayment = payment.total_price || 0;
+            
+            if (!dailyRevenue[dayOfMonth]) {
+              dailyRevenue[dayOfMonth] = 0;
+            }
+            
+            dailyRevenue[dayOfMonth] += totalPayment;
+          }
+        });
+    
+        const formattedDailyRevenue = [];
+    
+        for (let day = 1; day <= daysInMonth; day++) {
+          formattedDailyRevenue.push({
+            date: `${months[currentMonth]} ${day}`,
+            revenue: (dailyRevenue[day] || 0).toFixed(2)
+          });
+        }
+    
+        res.json({ dailyRevenue: formattedDailyRevenue });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+    
+    
+    // daily revenue end by Zihad----------------------------------
 
 
     // post  best selling & recent selling start by tonmoy
