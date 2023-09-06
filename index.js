@@ -378,6 +378,24 @@ async function run() {
       res.send(result);
     });
 
+
+    // -------------- update status by c foisal 
+
+    app.patch("/paymentStatus/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const statusdata = req.body;
+      // const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: statusdata.status
+        }
+      }
+      // console.log(id,statusdata)
+      const result = await paymentCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+
     // revenue start by Zihad----------------------------------
 
     app.get("/revenueSummary", async (req, res) => {
