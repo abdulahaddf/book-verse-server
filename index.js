@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const jwt = require('jsonwebtoken'); const SSLCommerzPayment = require('sslcommerz-lts')
+const jwt = require("jsonwebtoken");
+const SSLCommerzPayment = require("sslcommerz-lts");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,12 +15,16 @@ app.use(express.json());
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
   if (!authorization) {
-    return res.status(401).send({ error: true, message: 'unauthorized access' });
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
   }
   const token = authorization.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(401).send({ error: true, message: 'unauthorized access' });
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorized access" });
     }
     req.decoded = decoded;
     next();
@@ -57,90 +62,104 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const oldBooksCollection = database.collection("oldBooks");
-    const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
-
-
-
+    const bestSellingAndRecentSelling = database.collection(
+      "bestSellingAndRecentSelling"
+    );
 
     // jwt by nahid start
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "7d",
+      });
 
-      res.send({ token })
-    })
-
-
-
-
+      res.send({ token });
+    });
 
     // jwt by nahid end
 
-    // get all books  start by Tonmoy
+    // ---get all books  start by Tonmoy and filtering by Zihad----
 
     app.get("/allBooks", async (req, res) => {
-      const result = await allBooksCollections.find().toArray();
+      const { sort, order, page, itemsPerPage, category } = req.query;
+      const query = {};
 
-      res.send(result);
+      if (category && category !== "default") {
+        query.category = category;
+      }
+
+      let sortOptions = {};
+
+      if (sort) {
+        if (sort === "real_price") {
+          sortOptions = { real_price: order === "desc" ? -1 : 1 };
+        } else if (sort === "rating") {
+          sortOptions = { rating: order === "desc" ? -1 : 1 };
+        }
+      }
+
+      const options = {
+        sort: sortOptions,
+        skip: (page - 1) * itemsPerPage,
+        limit: parseInt(itemsPerPage),
+      };
+
+      try {
+        const result = await allBooksCollections.find(query, options).toArray();
+        res.json(result);
+      } catch (error) {
+        console.error("Error fetching books:", error);
+        res
+          .status(500)
+          .json({ error: "An error occurred while fetching books." });
+      }
     });
-    // get all books  end by Tonmoy
 
+    //------ get all books  end by Tonmoy and filtering by Zihad-------
 
     //review api
-    app.post('/add-review', async (req, res) => {
-      const { bookId, name, photo, rating, review, identifier, postDate } = req.body;
+    app.post("/add-review", async (req, res) => {
+      const { bookId, name, photo, rating, review, identifier, postDate } =
+        req.body;
       console.log(bookId);
       try {
         const existingReview = await allBooksCollections.findOne({
-
           $and: [
             { _id: new ObjectId(bookId) },
-            { 'review.identifier': identifier }
-          ]
+            { "review.identifier": identifier },
+          ],
         });
 
         if (existingReview) {
-          return res.status(400).json({ message: 'You have already reviewed this book' });
+          return res
+            .status(400)
+            .json({ message: "You have already reviewed this book" });
         }
 
         const updatedBook = await allBooksCollections.findOneAndUpdate(
           { _id: new ObjectId(bookId) },
-          { $push: { review: { name, photo, rating, review, identifier, postDate } } },
+          {
+            $push: {
+              review: { name, photo, rating, review, identifier, postDate },
+            },
+          },
           { returnOriginal: false }
         );
 
         if (!updatedBook.value) {
-          return res.status(404).json({ message: 'Book not found' });
+          return res.status(404).json({ message: "Book not found" });
         }
 
-        return res.json({ message: 'Review added successfully', book: updatedBook.value });
+        return res.json({
+          message: "Review added successfully",
+          book: updatedBook.value,
+        });
       } catch (error) {
-        console.error('Error adding review:', error);
-        return res.status(500).json({ message: 'An error occurred' });
+        console.error("Error adding review:", error);
+        return res.status(500).json({ message: "An error occurred" });
       }
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     // get single book by id  start by Tonmoy
 
@@ -163,11 +182,11 @@ async function run() {
 
     app.get("/userinfo", async (req, res) => {
       const email = req.query.email;
-      console.log(email)
+      console.log(email);
       const query = { email: email };
       const result = await usersCollection.findOne(query);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -183,7 +202,6 @@ async function run() {
       res.send(result);
     });
 
-
     app.patch("/userinfoupdate", async (req, res) => {
       const query = req.query.email;
       const filter = { email: query };
@@ -195,15 +213,19 @@ async function run() {
           address: userinfo.address,
           gender: userinfo.gender,
           birthday: userinfo.birthday,
-          phoneNumber: userinfo.phoneNumber
-        }
-      }
-      const result = await usersCollection.updateOne(filter, updateDoc, options);
-      res.send(result)
-      console.log(result)
-    })
+          phoneNumber: userinfo.phoneNumber,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+      console.log(result);
+    });
     app.patch("/userpictureupdate", async (req, res) => {
-      console.log('server clicked')
+      console.log("server clicked");
       const query = req.query.email;
       const filter = { email: query };
       const pitureinfo = req.body;
@@ -211,56 +233,51 @@ async function run() {
       const updateDoc = {
         $set: {
           photoURL: pitureinfo.photoURL,
-        }
-      }
-      const result = await usersCollection.updateOne(filter, updateDoc, options);
-      res.send(result)
-      console.log(result)
-    })
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+      console.log(result);
+    });
 
-
-    app.delete('/users/:id', async (req, res) => {
+    app.delete("/users/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
-      const result = await usersCollection.deleteOne(query)
-      res.send(result)
-    })
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
 
-
-    // make admin start by nahid 
-    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    // make admin start by nahid
+    app.get("/users/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
-        return res.send({ admin: false })
+        return res.send({ admin: false });
       }
-      console.log(req.decoded.email)
-      console.log(email)
-      const query = { email: email }
+      console.log(req.decoded.email);
+      console.log(email);
+      const query = { email: email };
       const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'admin' }
-      res.send(result)
-    })
+      const result = { admin: user?.role === "admin" };
+      res.send(result);
+    });
 
-
-
-
-
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          role: 'admin'
-        }
-      }
+          role: "admin",
+        },
+      };
       const result = await usersCollection.updateOne(filter, updateDoc);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
-
-
-
-    // make admin end by nahid 
+    // make admin end by nahid
 
     //------------------ Post method start by Zihad------------------
     app.post("/allBooks", async (req, res) => {
@@ -370,13 +387,28 @@ async function run() {
       res.send(result);
     });
 
+    // -----payment history and search start by zihad-------
     app.get("/paymentHistory", async (req, res) => {
-      const result = await paymentCollection
-        .find()
-        .sort({ date: -1 })
-        .toArray();
-      res.send(result);
+      const searchQuery = req.query.searchQuery || "";
+      const db = client.db(dbName);
+      const collection = db.collection("payment_history");
+
+      try {
+        const result = await collection
+          .find({ mail: { $regex: searchQuery, $options: "i" } })
+          .sort({ date: -1 })
+          .toArray();
+
+        res.json(result);
+      } catch (error) {
+        console.error("Error fetching payment history:", error);
+        res
+          .status(500)
+          .json({ error: "An error occurred while fetching payment history." });
+      }
     });
+
+    // -----payment history and search start by zihad-------
 
     // revenue start by Zihad----------------------------------
 
@@ -390,6 +422,8 @@ async function run() {
         let totalRevenue = 0;
         let totalRevenueCurrentMonth = 0;
         let totalRevenueToday = 0;
+        let totalRevenueLastMonth = 0;
+        let totalRevenueLastDay = 0;
 
         const daysOfWeek = [
           "Sunday",
@@ -426,23 +460,57 @@ async function run() {
             paymentMonth === currentDate.getMonth() + 1
           ) {
             totalRevenueCurrentMonth += payment.total_price || 0;
-
-            const paymentDay = new Date(
-              paymentYear,
-              paymentMonth - 1,
-              parseInt(paymentDate.split("-")[2])
-            );
-            const dayOfWeek = daysOfWeek[paymentDay.getDay()];
-
-            weeklyRevenue[dayOfWeek] += payment.total_price || 0;
           }
 
+          if (
+            paymentYear === currentDate.getFullYear() &&
+            paymentMonth === currentDate.getMonth()
+          ) {
+            totalRevenueLastMonth += payment.total_price || 0;
+          }
+
+          const paymentDay = new Date(
+            paymentYear,
+            paymentMonth - 1,
+            parseInt(paymentDate.split("-")[2])
+          );
+          const dayOfWeek = daysOfWeek[paymentDay.getDay()];
+
+          weeklyRevenue[dayOfWeek] += payment.total_price || 0;
+
           totalRevenue += payment.total_price || 0;
+        });
+
+        // Format the values within weeklyRevenue object
+        for (const dayOfWeek in weeklyRevenue) {
+          weeklyRevenue[dayOfWeek] = weeklyRevenue[dayOfWeek].toFixed(2);
+        }
+
+        const lastDay = new Date(currentDate);
+        lastDay.setDate(currentDate.getDate() - 1);
+
+        payments.forEach((payment) => {
+          const paymentDate = payment.date.split("T")[0];
+
+          const [year, month, day] = paymentDate.split("-");
+          const paymentYear = parseInt(year);
+          const paymentMonth = parseInt(month);
+          const paymentDay = parseInt(day);
+
+          if (
+            paymentYear === lastDay.getFullYear() &&
+            paymentMonth === lastDay.getMonth() + 1 &&
+            paymentDay === lastDay.getDate()
+          ) {
+            totalRevenueLastDay += payment.total_price || 0;
+          }
         });
 
         res.json({
           totalRevenueToday: totalRevenueToday.toFixed(2),
           totalRevenueCurrentMonth: totalRevenueCurrentMonth.toFixed(2),
+          totalRevenueLastMonth: totalRevenueLastMonth.toFixed(2),
+          totalRevenueLastDay: totalRevenueLastDay.toFixed(2),
           totalRevenue: totalRevenue.toFixed(2),
           weeklyRevenue,
         });
@@ -470,14 +538,26 @@ async function run() {
         });
 
         const months = [
-          "January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
         ];
 
-        const formattedMonthlyRevenue = monthlyRevenue.map((revenue, index) => ({
-          month: months[index],
-          revenue: revenue.toFixed(2)
-        }));
+        const formattedMonthlyRevenue = monthlyRevenue.map(
+          (revenue, index) => ({
+            month: months[index],
+            revenue: revenue.toFixed(2),
+          })
+        );
 
         res.json(formattedMonthlyRevenue);
       } catch (error) {
@@ -491,9 +571,18 @@ async function run() {
     // daily revenue start by Zihad----------------------------------
 
     const months = [
-      "January", "February", "March", "April",
-      "May", "June", "July", "August",
-      "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
     app.get("/dailyRevenue", async (req, res) => {
@@ -504,15 +593,23 @@ async function run() {
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth();
 
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const daysInMonth = new Date(
+          currentYear,
+          currentMonth + 1,
+          0
+        ).getDate();
 
         let dailyRevenue = {};
 
         payments.forEach((payment) => {
           const paymentDate = payment.date.split("T")[0];
-          const [paymentYear, paymentMonth, paymentDay] = paymentDate.split("-");
+          const [paymentYear, paymentMonth, paymentDay] =
+            paymentDate.split("-");
 
-          if (parseInt(paymentYear) === currentYear && parseInt(paymentMonth) === currentMonth + 1) {
+          if (
+            parseInt(paymentYear) === currentYear &&
+            parseInt(paymentMonth) === currentMonth + 1
+          ) {
             const dayOfMonth = parseInt(paymentDay);
             const totalPayment = payment.total_price || 0;
 
@@ -529,7 +626,7 @@ async function run() {
         for (let day = 1; day <= daysInMonth; day++) {
           formattedDailyRevenue.push({
             date: `${months[currentMonth]} ${day}`,
-            revenue: (dailyRevenue[day] || 0).toFixed(2)
+            revenue: (dailyRevenue[day] || 0).toFixed(2),
           });
         }
 
@@ -540,9 +637,7 @@ async function run() {
       }
     });
 
-
     // daily revenue end by Zihad----------------------------------
-
 
     // post  best selling & recent selling start by tonmoy
 
@@ -616,71 +711,67 @@ async function run() {
 
     //  get recent selling data  end by  Tonmoy
 
-
-
-
     //find purchased books
     app.get("/purchased", async (req, res) => {
       const email = req.query.email;
       // console.log(email);
       const query = { mail: email };
-      const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+      const result = await paymentCollection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
       res.send(result);
     });
 
+    //  post data SSLCommerz start  by Tonmoy
 
-
-    //  post data SSLCommerz start  by Tonmoy 
-
-    app.post('/order', async (req, res) => {
-
+    app.post("/order", async (req, res) => {
       const info = req.body;
 
       // console.log(info)
 
-      const random_id = new ObjectId().toString()
+      const random_id = new ObjectId().toString();
       const data = {
         total_amount: info?.price,
-        currency: 'BDT',
+        currency: "BDT",
         tran_id: random_id, // use unique tran_id for each api call
         success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
-        fail_url: 'https://book-verse-server-phi.vercel.app/payment/fail',
-        cancel_url: 'https://book-verse-server-phi.vercel.app/payment/cancel',
-        ipn_url: 'http://localhost:3030/ipn',
-        shipping_method: 'Courier',
-        product_name: 'Computer.',
-        product_category: 'Electronic',
-        product_profile: 'general',
+        fail_url: "https://book-verse-server-phi.vercel.app/payment/fail",
+        cancel_url: "https://book-verse-server-phi.vercel.app/payment/cancel",
+        ipn_url: "http://localhost:3030/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: "Electronic",
+        product_profile: "general",
         cus_name: info?.name,
         cus_email: info?.email,
-        cus_add1: 'Dhaka',
-        cus_add2: 'Dhaka',
-        cus_city: 'Dhaka',
-        cus_state: 'Dhaka',
-        cus_postcode: '1000',
-        cus_country: 'Bangladesh',
-        cus_phone: '01711111111',
-        cus_fax: '01711111111',
-        ship_name: 'Customer Name',
-        ship_add1: 'Dhaka',
-        ship_add2: 'Dhaka',
-        ship_city: 'Dhaka',
-        ship_state: 'Dhaka',
+        cus_add1: "Dhaka",
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: "01711111111",
+        cus_fax: "01711111111",
+        ship_name: "Customer Name",
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
         ship_postcode: 1000,
-        ship_country: 'Bangladesh',
+        ship_country: "Bangladesh",
       };
-      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
-      sslcz.init(data).then(apiResponse => {
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+      sslcz.init(data).then((apiResponse) => {
         // Redirect the user to payment gateway
-        let GatewayPageURL = apiResponse.GatewayPageURL
-        res.send({ url: GatewayPageURL })
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+        res.send({ url: GatewayPageURL });
         // console.log('Redirecting to: ', GatewayPageURL)
       });
 
       //  payment success start
-      app.post('/payment/success/:id', async (req, res) => {
-
-        const tran_id = req.params.id
+      app.post("/payment/success/:id", async (req, res) => {
+        const tran_id = req.params.id;
 
         const payment_details = {
           transactionId: tran_id,
@@ -688,76 +779,49 @@ async function run() {
           date: info?.date,
           books: [...info?.books],
           total_price: info?.price,
-          name: info?.name
+          name: info?.name,
+        };
 
-        }
-
-        const result = await paymentCollection.insertOne(payment_details)
-
-
+        const result = await paymentCollection.insertOne(payment_details);
 
         if (result.insertedId) {
-          res.redirect(`https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`)
+          res.redirect(
+            `https://book-verse-endcoders.netlify.app/SSLPaymentSuccess`
+          );
         }
-
-
       });
       //  payment success end
 
-
       //  payment  fail stat
 
-      app.post('/payment/fail', async (req, res) => {
-
-
-        res.redirect(`https://book-verse-endcoders.netlify.app`)
-
-      })
-
+      app.post("/payment/fail", async (req, res) => {
+        res.redirect(`https://book-verse-endcoders.netlify.app`);
+      });
 
       //  payment fail end
 
       //  payment  cancel stat
 
-      app.post('/payment/cancel', async (req, res) => {
-
-
-        res.redirect(`https://book-verse-endcoders.netlify.app`)
-
-      })
-
+      app.post("/payment/cancel", async (req, res) => {
+        res.redirect(`https://book-verse-endcoders.netlify.app`);
+      });
 
       //  payment cancel end
-
-
-
-    })
-
+    });
 
     //  post data SSLCommerz end  by Tonmoy -----------------------------------------------
 
     // Real time Chat start by Tonmoy-------------------------------------------------------
 
-
-
     // post chat
-    app.post('/postChat', async (req, res) => {
-
-
+    app.post("/postChat", async (req, res) => {
       // const email = req?.query?.email;
 
       // const chat = req.body
 
       // const options = { upsert: true };
 
-
-
-
-
       // const filter = { email: email };
-
-
-
 
       // const updateDoc = {
       //   $set: {
@@ -767,18 +831,14 @@ async function run() {
 
       // const update = await usersCollection.updateOne(filter, updateDoc);
 
-
-
-
       // res.send(update)
-
 
       try {
         const email = req?.query?.email;
         const chat = req.body;
 
         if (!email) {
-          return res.status(400).send('Email parameter is missing');
+          return res.status(400).send("Email parameter is missing");
         }
 
         const filter = { email: email };
@@ -790,77 +850,69 @@ async function run() {
 
         const options = { upsert: true };
 
-        const updateResult = await usersCollection.updateOne(filter, updateDoc, options);
+        const updateResult = await usersCollection.updateOne(
+          filter,
+          updateDoc,
+          options
+        );
 
-        if (updateResult.matchedCount === 0 && updateResult.upsertedCount === 0) {
-          return res.status(404).send('User not found');
+        if (
+          updateResult.matchedCount === 0 &&
+          updateResult.upsertedCount === 0
+        ) {
+          return res.status(404).send("User not found");
         }
 
         res.send(updateResult);
       } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('An error occurred');
+        console.error("Error:", error);
+        res.status(500).send("An error occurred");
       }
-
-
     });
 
     // chat Action
-    app.post('/chatAction', async (req, res) => {
+    app.post("/chatAction", async (req, res) => {
       try {
         const email = req?.query?.email;
-        const cancel = 'cancel';
-
-        
+        const cancel = "cancel";
 
         if (!email) {
-          return res.status(400).send('Email parameter is missing');
+          return res.status(400).send("Email parameter is missing");
         }
 
-       
         const userDocument = await usersCollection.findOne({ email });
 
         if (!userDocument) {
-          return res.status(404).send('User not found');
+          return res.status(404).send("User not found");
         }
 
         const lastMessageIndex = userDocument.chat.length - 1;
 
-        
         const filter = { email };
         const updateDoc = {
           $set: {
-            [`chat.${lastMessageIndex}.action`]: cancel
-          }
+            [`chat.${lastMessageIndex}.action`]: cancel,
+          },
         };
 
         const updateResult = await usersCollection.updateOne(filter, updateDoc);
 
         if (updateResult.matchedCount === 0) {
-          return res.status(404).send('User not found');
+          return res.status(404).send("User not found");
         }
 
         res.send(updateResult);
       } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('An error occurred');
+        console.error("Error:", error);
+        res.status(500).send("An error occurred");
       }
     });
 
-
-
     // get userdata
-    app.get('/userData', async (req, res) => {
-
-
+    app.get("/userData", async (req, res) => {
       // const email = req?.query?.email
 
-
-
-
       // const result = await usersCollection.findOne({ email: email })
-
-
 
       // if (!result) {
 
@@ -869,37 +921,28 @@ async function run() {
 
       // res.send(result)
 
-
-
       const email = req?.query?.email;
 
       try {
         if (!email) {
-          return res.status(400).send('Email parameter is missing');
+          return res.status(400).send("Email parameter is missing");
         }
 
         const result = await usersCollection.findOne({ email: email });
 
         if (!result) {
-          return res.send({ nei: 'nei' });
+          return res.send({ nei: "nei" });
         }
 
         res.send(result);
       } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('An error occurred');
+        console.error("Error:", error);
+        res.status(500).send("An error occurred");
       }
-
-    })
-
-
-
-
+    });
 
     // alluser data
-    app.get('/allUserData', async (req, res) => {
-
-
+    app.get("/allUserData", async (req, res) => {
       // const result = await usersCollection.find().toArray()
 
       // res.send(result)
@@ -908,51 +951,33 @@ async function run() {
         const result = await usersCollection.find().toArray();
         res.send(result);
       } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('An error occurred');
+        console.error("Error:", error);
+        res.status(500).send("An error occurred");
       }
-
     });
 
     // get single user by email
 
-    app.get('/singleUserDataByEmail/:email', async (req, res) => {
-
-
-
+    app.get("/singleUserDataByEmail/:email", async (req, res) => {
       //  const email= req?.params?.email
-
-
 
       // const result = await usersCollection.findOne({email:email})
 
-
-
-
-
       // res.send(result)
 
-
       try {
-
         const email = req.params.email;
-
 
         const result = await usersCollection.findOne({ email: email });
 
-
         res.send(result);
       } catch (error) {
-
         console.error("Error:", error);
         res.status(500).send("An error occurred while fetching user data.");
       }
-
     });
 
-
-
-    app.get('/singleUserData/:id', async (req, res) => {
+    app.get("/singleUserData/:id", async (req, res) => {
       const id = req?.params?.id;
 
       try {
@@ -961,19 +986,12 @@ async function run() {
         const result = await usersCollection.findOne({ _id: objectId });
         res.send(result);
       } catch (error) {
-        console.error('Error creating ObjectId:', error);
-        res.status(400).send('Invalid ID format');
+        console.error("Error creating ObjectId:", error);
+        res.status(400).send("Invalid ID format");
       }
     });
 
-
-
-
-
-
     //  Real time Chat end by Tonmoy----------------------------------------------------------
-
-
 
     //Old Books API started by AHAD
 
