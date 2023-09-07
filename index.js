@@ -62,9 +62,10 @@ async function run() {
     const usersCollection = database.collection("users");
     const paymentCollection = database.collection("payments");
     const oldBooksCollection = database.collection("oldBooks");
-    const bestSellingAndRecentSelling = database.collection(
-      "bestSellingAndRecentSelling"
-    );
+    const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
+
+
+
 
     // jwt by nahid start
 
@@ -407,8 +408,6 @@ async function run() {
           .json({ error: "An error occurred while fetching payment history." });
       }
     });
-
-    // -----payment history and search start by zihad-------
 
     // revenue start by Zihad----------------------------------
 
@@ -1027,6 +1026,30 @@ async function run() {
     });
 
     //Old Books API end by AHAD
+
+
+    //Promo Code Api start by AHAD
+    app.post("/promo", async (req, res) => {
+      const promoCode = req.body;
+      // console.log(promoCode);
+      const result = await promoCodesCollection.insertOne(promoCode);
+      res.send(result);
+    });
+
+    app.get("/promo", async (req, res) => {
+      const result = await promoCodesCollection.find().toArray();
+      res.send(result);
+    });
+    app.delete("/promo/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await promoCodesCollection.deleteOne(query);
+      res.send(result);
+    });
+    
+    //Promo Code API end by AHAD
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
