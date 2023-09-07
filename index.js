@@ -102,26 +102,44 @@ async function run() {
 
 
 
-    // get all books  start by Tonmoy---------------
+    // ---get all books  start by Tonmoy and filtering by Zihad----
 
-    // app.get("/allBooks", async (req, res) => {
-    //   const result = await allBooksCollections.find().toArray();
-
-    //   res.send(result);
-    // });
     app.get("/allBooks", async (req, res) => {
+      const { sort, order, page, itemsPerPage, category } = req.query;
+      const query = {};
+
+      if (category && category !== "default") {
+        query.category = category;
+      }
+
+      let sortOptions = {};
+
+      if (sort) {
+        if (sort === "real_price") {
+          sortOptions = { real_price: order === "desc" ? -1 : 1 };
+        } else if (sort === "rating") {
+          sortOptions = { rating: order === "desc" ? -1 : 1 };
+        }
+      }
+
+      const options = {
+        sort: sortOptions,
+        skip: (page - 1) * itemsPerPage,
+        limit: parseInt(itemsPerPage),
+      };
+
       try {
-        // Fetch all books from the collection
-        const result = await allBooksCollections.find().toArray();
+        const result = await allBooksCollections.find(query, options).toArray();
         res.json(result);
       } catch (error) {
-        // Handle any unexpected errors here
-        console.error("Error fetching all books:", error);
-        res.status(500).json({ message: "An error occurred" });
+        console.error("Error fetching books:", error);
+        res
+          .status(500)
+          .json({ error: "An error occurred while fetching books." });
       }
     });
 
-    // get all books  end by Tonmoy-------------
+    //------ get all books  end by Tonmoy and filtering by Zihad-------
 
 
 
