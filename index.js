@@ -75,29 +75,55 @@ async function run() {
 
 
 
-    // jwt by nahid start
+    // jwt by nahid start----------------
+
+    // app.post("/jwt", (req, res) => {
+    //   const user = req.body;
+    //   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
+
+    //   res.send({ token })
+    // })
 
     app.post("/jwt", (req, res) => {
-      const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
+      try {
+        const user = req.body;
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
 
-      res.send({ token })
-    })
-
-
-
-
-
-    // jwt by nahid end
-
-    // get all books  start by Tonmoy
-
-    app.get("/allBooks", async (req, res) => {
-      const result = await allBooksCollections.find().toArray();
-
-      res.send(result);
+        res.send({ token });
+      } catch (error) {
+        // Handle the error here
+        console.error(error);
+        res.status(500).send("Internal Server Error"); // You can customize the error response as needed
+      }
     });
-    // get all books  end by Tonmoy
+
+
+    // jwt by nahid end--------------
+
+
+
+    // get all books  start by Tonmoy---------------
+
+    // app.get("/allBooks", async (req, res) => {
+    //   const result = await allBooksCollections.find().toArray();
+
+    //   res.send(result);
+    // });
+    app.get("/allBooks", async (req, res) => {
+      try {
+        // Fetch all books from the collection
+        const result = await allBooksCollections.find().toArray();
+        res.json(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error fetching all books:", error);
+        res.status(500).json({ message: "An error occurred" });
+      }
+    });
+
+    // get all books  end by Tonmoy-------------
+
+
 
 
     //review api
@@ -138,153 +164,335 @@ async function run() {
 
 
 
+    // get single book by id  start by Tonmoy ------------------
 
+    // app.get("/singleBook/:id", async (req, res) => {
+    //   const id = req.params.id;
 
+    //   const find = { _id: new ObjectId(id) };
 
+    //   const result = await allBooksCollections.findOne(find);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // get single book by id  start by Tonmoy
+    //   res.send(result);
+    // });
 
     app.get("/singleBook/:id", async (req, res) => {
-      const id = req.params.id;
+      const id = req?.params?.id;
 
-      const find = { _id: new ObjectId(id) };
+      try {
+        const find = { _id: new ObjectId(id) };
 
-      const result = await allBooksCollections.findOne(find);
+        const result = await allBooksCollections.findOne(find);
 
-      res.send(result);
+        if (!result) {
+          // If no book with the specified ID is found, send a 404 Not Found response
+          return res.status(404).json({ message: 'Book not found' });
+        }
+
+        res.send(result);
+      } catch (error) {
+        // Handle the error here
+        console.error('Error fetching single book:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
     });
-    // get single book id  end by Tonmoy
+    // get single book id  end by Tonmoy ---------------------------------
+
+
+
+
+
+
 
     //user related api
+    // app.get("/users", async (req, res) => {
+    //   const result = await usersCollection.find().toArray();
+    //   res.send(result);
+    // });
     app.get("/users", async (req, res) => {
-      const result = await usersCollection.find().toArray();
-      res.send(result);
+      try {
+        // Fetch all users from the collection
+        const result = await usersCollection.find().toArray();
+        res.json(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error fetching users:", error);
+        res.status(500).json({ message: "An error occurred" });
+      }
     });
+
+
+    // app.get("/userinfo", async (req, res) => {
+    //   const email = req.query.email;
+    //   console.log(email)
+    //   const query = { email: email };
+    //   const result = await usersCollection.findOne(query);
+    //   res.send(result)
+    // });
 
     app.get("/userinfo", async (req, res) => {
-      const email = req.query.email;
-      console.log(email)
-      const query = { email: email };
-      const result = await usersCollection.findOne(query);
-      res.send(result)
-    })
+      try {
+        const email = req?.query?.email;
+        console.log(email);
 
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-      console.log(user);
-      const query = { email: user.email };
-      const existingUser = await usersCollection.findOne(query);
+        const query = { email: email };
+        const result = await usersCollection.findOne(query);
 
-      if (existingUser) {
-        return res.send({ message: "user exists" });
+        if (!result) {
+          // If no user with the specified email is found, send a 404 Not Found response
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.send(result);
+      } catch (error) {
+        // Handle the error here
+        console.error('Error fetching user information:', error);
+        res.status(500).json({ message: 'An error occurred' });
       }
-
-      const result = await usersCollection.insertOne(user);
-      res.send(result);
     });
 
 
+    // app.post("/users", async (req, res) => {
+    //   const user = req.body;
+    //   console.log(user);
+    //   const query = { email: user.email };
+    //   const existingUser = await usersCollection.findOne(query);
+
+    //   if (existingUser) {
+    //     return res.send({ message: "user exists" });
+    //   }
+
+    //   const result = await usersCollection.insertOne(user);
+    //   res.send(result);
+    // });
+
+    app.post("/users", async (req, res) => {
+      try {
+        const user = req?.body;
+        console.log(user);
+        const query = { email: user?.email };
+        const existingUser = await usersCollection.findOne(query);
+
+        if (existingUser) {
+          return res.send({ message: "user exists" });
+        }
+
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      } catch (error) {
+        // Handle the error here
+        console.error('Error creating user:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    });
+
+
+
+    // app.patch("/userinfoupdate", async (req, res) => {
+    //   const query = req.query.email;
+    //   const filter = { email: query };
+    //   const userinfo = req.body;
+    //   const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       displayName: userinfo.displayName,
+    //       address: userinfo.address,
+    //       gender: userinfo.gender,
+    //       birthday: userinfo.birthday,
+    //       phoneNumber: userinfo.phoneNumber
+    //     }
+    //   }
+    //   const result = await usersCollection.updateOne(filter, updateDoc, options);
+    //   res.send(result)
+    //   console.log(result)
+    // });
     app.patch("/userinfoupdate", async (req, res) => {
-      const query = req.query.email;
-      const filter = { email: query };
-      const userinfo = req.body;
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          displayName: userinfo.displayName,
-          address: userinfo.address,
-          gender: userinfo.gender,
-          birthday: userinfo.birthday,
-          phoneNumber: userinfo.phoneNumber
+      try {
+        const query = req?.query?.email;
+        const filter = { email: query };
+        const userinfo = req?.body;
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            displayName: userinfo?.displayName,
+            address: userinfo?.address,
+            gender: userinfo?.gender,
+            birthday: userinfo?.birthday,
+            phoneNumber: userinfo?.phoneNumber
+          }
         }
+        const result = await usersCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+        console.log(result)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error updating user information:', error);
+        res.status(500).json({ message: 'An error occurred' });
       }
-      const result = await usersCollection.updateOne(filter, updateDoc, options);
-      res.send(result)
-      console.log(result)
-    })
+    });
+
+
+    // app.patch("/userpictureupdate", async (req, res) => {
+    //   console.log('server clicked')
+    //   const query = req.query.email;
+    //   const filter = { email: query };
+    //   const pitureinfo = req.body;
+    //   const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       photoURL: pitureinfo.photoURL,
+    //     }
+    //   }
+    //   const result = await usersCollection.updateOne(filter, updateDoc, options);
+    //   res.send(result)
+    //   console.log(result)
+    // })
+
     app.patch("/userpictureupdate", async (req, res) => {
-      console.log('server clicked')
-      const query = req.query.email;
-      const filter = { email: query };
-      const pitureinfo = req.body;
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          photoURL: pitureinfo.photoURL,
+      try {
+        console.log('server clicked')
+        const query = req?.query?.email;
+        const filter = { email: query };
+        const pitureinfo = req?.body;
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            photoURL: pitureinfo?.photoURL,
+          }
         }
+        const result = await usersCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+        console.log(result)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error updating profile picture:', error);
+        res.status(500).json({ message: 'An error occurred' });
       }
-      const result = await usersCollection.updateOne(filter, updateDoc, options);
-      res.send(result)
-      console.log(result)
-    })
+    });
 
 
+    // app.delete('/users/:id', async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) }
+    //   const result = await usersCollection.deleteOne(query)
+    //   res.send(result)
+    // })
     app.delete('/users/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
-      const result = await usersCollection.deleteOne(query)
-      res.send(result)
-    })
+      try {
+        const id = req?.params?.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await usersCollection.deleteOne(query)
+        res.send(result)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error deleting user:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    });
 
 
     // make admin start by nahid 
+    // app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    //   const email = req.params.email;
+    //   if (req.decoded.email !== email) {
+    //     return res.send({ admin: false })
+    //   }
+    //   console.log(req.decoded.email)
+    //   console.log(email)
+    //   const query = { email: email }
+    //   const user = await usersCollection.findOne(query);
+    //   const result = { admin: user?.role === 'admin' }
+    //   res.send(result)
+    // });
     app.get('/users/admin/:email', verifyJWT, async (req, res) => {
-      const email = req.params.email;
-      if (req.decoded.email !== email) {
-        return res.send({ admin: false })
-      }
-      console.log(req.decoded.email)
-      console.log(email)
-      const query = { email: email }
-      const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'admin' }
-      res.send(result)
-    })
-
-
-
-
-
-    app.patch('/users/admin/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          role: 'admin'
+      try {
+        const email = req?.params?.email;
+        if (req?.decoded?.email !== email) {
+          return res.send({ admin: false })
         }
+        console.log(req?.decoded?.email)
+        console.log(email)
+        const query = { email: email }
+        const user = await usersCollection.findOne(query);
+        const result = { admin: user?.role === 'admin' }
+        res.send(result)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error checking admin role:', error);
+        res.status(500).json({ message: 'An error occurred' });
       }
-      const result = await usersCollection.updateOne(filter, updateDoc);
-      res.send(result)
-    })
+    });
+
+
+
+
+
+    // app.patch('/users/admin/:id', async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const updateDoc = {
+    //     $set: {
+    //       role: 'admin'
+    //     }
+    //   }
+    //   const result = await usersCollection.updateOne(filter, updateDoc);
+    //   res.send(result)
+    // })
+    app.patch('/users/admin/:id', async (req, res) => {
+      try {
+        const id = req?.params?.id;
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            role: 'admin'
+          }
+        }
+        const result = await usersCollection.updateOne(filter, updateDoc);
+        res.send(result)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error updating user role:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    });
 
 
 
 
     // make admin end by nahid 
 
+
+
+
+
     //------------------ Post method start by Zihad------------------
+    // app.post("/allBooks", async (req, res) => {
+    //   const newBook = req.body;
+    //   // console.log(newBook);
+    //   const result = await allBooksCollections.insertOne(newBook);
+    //   res.send(result);
+    // });
     app.post("/allBooks", async (req, res) => {
-      const newBook = req.body;
-      // console.log(newBook);
-      const result = await allBooksCollections.insertOne(newBook);
-      res.send(result);
+      try {
+        const newBook = req?.body;
+        // console.log(newBook);
+        const result = await allBooksCollections.insertOne(newBook);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error adding a new book:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
     });
+
     //------------------ Post method end by Zihad------------------
 
-    //------------------ Update method end by Zihad------------------
+
+
+
+
+
+    //------------------ Update method start by Zihad------------------
 
     app.put("/allBooks/:id", async (req, res) => {
       try {
@@ -332,13 +540,28 @@ async function run() {
     //------------------ Update method end by Zihad------------------
 
     //------------------ Delete method start by Zihad------------------
+    // app.delete("/allBooks/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await allBooksCollections.deleteOne(query);
+    //   res.send(result);
+    // });
     app.delete("/allBooks/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await allBooksCollections.deleteOne(query);
-      res.send(result);
+      try {
+        const id = req?.params?.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await allBooksCollections.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error deleting book:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
+
     //------------------ Delete method end by Zihad------------------
+
+
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
@@ -375,39 +598,91 @@ async function run() {
     });
 
     // payment related api
+    // app.post("/payments", async (req, res) => {
+    //   const payment = req.body;
+    //   console.log("pay", payment);
+    //   const result = await paymentCollection.insertOne(payment);
+    //   console.log("res", result);
+    //   res.send(result);
+    // });
+
     app.post("/payments", async (req, res) => {
-      const payment = req.body;
-      console.log("pay", payment);
-      const result = await paymentCollection.insertOne(payment);
-      console.log("res", result);
-      res.send(result);
+      try {
+
+        const payment = req?.body;
+        console.log("pay", payment);
+        const result = await paymentCollection.insertOne(payment);
+        console.log("res", result);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error processing payment:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
+
+
+    // app.get("/paymentHistory", async (req, res) => {
+    //   const result = await paymentCollection
+    //     .find()
+    //     .sort({ date: -1 })
+    //     .toArray();
+    //   res.send(result);
+    // });
 
     app.get("/paymentHistory", async (req, res) => {
-      const result = await paymentCollection
-        .find()
-        .sort({ date: -1 })
-        .toArray();
-      res.send(result);
+      try {
+        // Fetch payment history, sort by date in descending order
+        const result = await paymentCollection.find().sort({ date: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error fetching payment history:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    });
+
+    // -------------- update status start by  foisal 
+
+    // app.patch("/paymentStatus/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const statusdata = req.body;
+    //   // const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       status: statusdata.status
+    //     }
+    //   }
+    //   // console.log(id,statusdata)
+    //   const result = await paymentCollection.updateOne(filter, updateDoc);
+    //   res.send(result)
+    // })
+    app.patch("/paymentStatus/:id", async (req, res) => {
+      try {
+        const id = req?.params?.id;
+        const filter = { _id: new ObjectId(id) };
+        const statusdata = req?.body;
+        // const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            status: statusdata?.status
+          }
+        }
+        // console.log(id,statusdata)
+        const result = await paymentCollection.updateOne(filter, updateDoc);
+        res.send(result)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error updating payment status:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
 
 
-    // -------------- update status by c foisal 
+    // -------------- update status end by  foisal 
 
-    app.patch("/paymentStatus/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const statusdata = req.body;
-      // const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          status: statusdata.status
-        }
-      }
-      // console.log(id,statusdata)
-      const result = await paymentCollection.updateOne(filter, updateDoc);
-      res.send(result)
-    })
+
 
     // revenue start by Zihad----------------------------------
 
@@ -484,6 +759,8 @@ async function run() {
     });
 
     // revenue end by Zihad----------------------------------
+
+
     // monthly revenue start by Zihad----------------------------------
 
     app.get("/monthlyRevenue", async (req, res) => {
@@ -518,6 +795,8 @@ async function run() {
     });
 
     // monthly revenue end by Zihad----------------------------------
+
+
 
     // daily revenue start by Zihad----------------------------------
 
@@ -575,7 +854,8 @@ async function run() {
     // daily revenue end by Zihad----------------------------------
 
 
-    // post  best selling & recent selling start by tonmoy
+
+    // post  best selling & recent selling start by tonmoy-------------------
 
     app.post("/bestSellingAndRecentSelling", async (req, res) => {
       try {
@@ -619,45 +899,84 @@ async function run() {
       }
     });
 
-    // post  best selling & recent selling end by Tonmoy
+    // post  best selling & recent selling end by Tonmoy-------------------
 
-    //  get best selling data  start by Tonmoy
+    //  get best selling data  start by Tonmoy------------------
 
+    // app.get("/bestSelling", async (req, res) => {
+    //   const result = await bestSellingAndRecentSelling
+    //     .find()
+    //     .sort({ count: -1 })
+    //     .toArray();
+
+    //   res.send(result);
+    // });
     app.get("/bestSelling", async (req, res) => {
-      const result = await bestSellingAndRecentSelling
-        .find()
-        .sort({ count: -1 })
-        .toArray();
-
-      res.send(result);
+      try {
+        // Fetch best-selling items, sort by count in descending order
+        const result = await bestSellingAndRecentSelling.find().sort({ count: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error fetching best-selling items:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
     });
 
-    //  get best selling data  end by  Tonmoy
 
-    //  get recent selling data  start by Tonmoy
+    //  get best selling data  end by  Tonmoy---------------
 
+
+    //  get recent selling data  start by Tonmoy--------------
+
+    // app.get("/recentSelling", async (req, res) => {
+    //   const result = await bestSellingAndRecentSelling
+    //     .find()
+    //     .sort({ purchase_date: -1 })
+    //     .toArray();
+
+    //   res.send(result);
+    // });
     app.get("/recentSelling", async (req, res) => {
-      const result = await bestSellingAndRecentSelling
-        .find()
-        .sort({ purchase_date: -1 })
-        .toArray();
-
-      res.send(result);
+      try {
+        // Fetch recent selling items, sort by purchase_date in descending order
+        const result = await bestSellingAndRecentSelling.find().sort({ purchase_date: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error fetching recent selling items:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
     });
 
-    //  get recent selling data  end by  Tonmoy
+
+    //  get recent selling data  end by  Tonmoy------------
 
 
 
 
     //find purchased books
+    // app.get("/purchased", async (req, res) => {
+    //   const email = req.query.email;
+    //   // console.log(email);
+    //   const query = { mail: email };
+    //   const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+    //   res.send(result);
+    // });
     app.get("/purchased", async (req, res) => {
-      const email = req.query.email;
-      // console.log(email);
-      const query = { mail: email };
-      const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
-      res.send(result);
+      try {
+        const email = req?.query?.email;
+        // console.log(email);
+        const query = { mail: email };
+        const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error fetching purchased items:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
     });
+
 
 
 
@@ -762,7 +1081,7 @@ async function run() {
 
 
 
-    })
+    });
 
 
     //  post data SSLCommerz end  by Tonmoy -----------------------------------------------
@@ -777,33 +1096,7 @@ async function run() {
     app.post('/postChat', async (req, res) => {
 
 
-      // const email = req?.query?.email;
 
-      // const chat = req.body
-
-      // const options = { upsert: true };
-
-
-
-
-
-      // const filter = { email: email };
-
-
-
-
-      // const updateDoc = {
-      //   $set: {
-      //     chat: chat
-      //   },
-      // };
-
-      // const update = await usersCollection.updateOne(filter, updateDoc);
-
-
-
-
-      // res.send(update)
 
 
       try {
@@ -886,21 +1179,6 @@ async function run() {
     app.get('/userData', async (req, res) => {
 
 
-      // const email = req?.query?.email
-
-
-
-
-      // const result = await usersCollection.findOne({ email: email })
-
-
-
-      // if (!result) {
-
-      //   return res.send({ nei: 'nei' })
-      // }
-
-      // res.send(result)
 
 
 
@@ -933,9 +1211,6 @@ async function run() {
     app.get('/allUserData', async (req, res) => {
 
 
-      // const result = await usersCollection.find().toArray()
-
-      // res.send(result)
 
       try {
         const result = await usersCollection.find().toArray();
@@ -952,18 +1227,6 @@ async function run() {
     app.get('/singleUserDataByEmail/:email', async (req, res) => {
 
 
-
-      //  const email= req?.params?.email
-
-
-
-      // const result = await usersCollection.findOne({email:email})
-
-
-
-
-
-      // res.send(result)
 
 
       try {
@@ -984,7 +1247,7 @@ async function run() {
     });
 
 
-
+    // get single user data by id
     app.get('/singleUserData/:id', async (req, res) => {
       const id = req?.params?.id;
 
@@ -1061,25 +1324,46 @@ async function run() {
     });
 
 
-    // get dada from  seller AndBuyer Collections 
+    // get data from  seller AndBuyer Collections 
+    // app.get('/sellerAndBuyerCollections', async (req, res) => {
+
+    //   const seller = req?.query?.seller
+    //   const buyer = req?.query?.buyer
+
+    //   const result1 = await userToUser.findOne({ $and: [{ seller: seller }, { buyer: buyer }] })
+
+    //   if(result1){
+    //     return res.send(result1)
+    //   }
+
+    //   const result2 = await userToUser.findOne({ $and: [{ seller: buyer }, { buyer: seller }] })
+
+    //   return res.send(result2)
+
+    // });
     app.get('/sellerAndBuyerCollections', async (req, res) => {
+      try {
+        const seller = req?.query?.seller
+        const buyer = req?.query?.buyer
 
-      const seller = req?.query?.seller
-      const buyer = req?.query?.buyer
+        const result1 = await userToUser.findOne({ $and: [{ seller: seller }, { buyer: buyer }] })
 
-      const result1 = await userToUser.findOne({ $and: [{ seller: seller }, { buyer: buyer }] })
-      
-      if(result1){
-        return res.send(result1)
+        if (result1) {
+          return res.send(result1)
+        }
+
+        const result2 = await userToUser.findOne({ $and: [{ seller: buyer }, { buyer: seller }] })
+
+        return res.send(result2)
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error fetching seller and buyer collections:', error);
+        res.status(500).json({ message: 'An error occurred' });
       }
-
-      const result2 = await userToUser.findOne({ $and: [{ seller: buyer }, { buyer: seller }] })
-   
-      return res.send(result2)
-
     });
 
 
+    // post user to user
     app.post('/postChatUserToUser', async (req, res) => {
 
 
@@ -1117,85 +1401,64 @@ async function run() {
       }
     }, []);
 
-// get all users chats
+    // get all users chats
 
-app.get('/userAllChats', async (req, res) => {
-  try {
-    const email = req?.query?.email;
-    if (!email) {
-      throw new Error('Email is missing in the request query.');
-    }
+    app.get('/userAllChats', async (req, res) => {
+      try {
+        const email = req?.query?.email;
+        if (!email) {
+          throw new Error('Email is missing in the request query.');
+        }
 
-    const [userToUserResult, usersResult] = await Promise.all([
-      userToUser.aggregate([
-        {
-          $match: {
-            $or: [
-              { seller: email },
-              { buyer: email },
-            ],
-          },
-        },
-        {
-          $lookup: {
-            from: 'usersCollection', // Replace 'usersCollection' with the actual name of your 'users' collection
-            localField: 'seller',
-            foreignField: 'email',
-            as: 'sellerInfo',
-          },
-        },
-        {
-          $lookup: {
-            from: 'usersCollection', // Replace 'usersCollection' with the actual name of your 'users' collection
-            localField: 'buyer',
-            foreignField: 'email',
-            as: 'buyerInfo',
-          },
-        },
-      ]).toArray(),
-      usersCollection.find({ email: email }).toArray(),
-    ]);
+        const [userToUserResult, usersResult] = await Promise.all([
+          userToUser.aggregate([
+            {
+              $match: {
+                $or: [
+                  { seller: email },
+                  { buyer: email },
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: 'usersCollection', // Replace 'usersCollection' with the actual name of your 'users' collection
+                localField: 'seller',
+                foreignField: 'email',
+                as: 'sellerInfo',
+              },
+            },
+            {
+              $lookup: {
+                from: 'usersCollection', // Replace 'usersCollection' with the actual name of your 'users' collection
+                localField: 'buyer',
+                foreignField: 'email',
+                as: 'buyerInfo',
+              },
+            },
+          ]).toArray(),
+          usersCollection.find({ email: email }).toArray(),
+        ]);
 
-    const mergedResult = userToUserResult.concat(usersResult);
+        const mergedResult = userToUserResult.concat(usersResult);
 
-    res.send(mergedResult);
-  } catch (error) {
-    console.error('Error:', error.message);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-
+        res.send(mergedResult);
+      } catch (error) {
+        console.error('Error:', error.message);
+        res.status(500).send('Internal Server Error');
+      }
+    });
 
 
 
 
-    // app.get('/userAllChats', async (req, res) => {
-    //   try {
-    //     const email = req?.query?.email;
-    //     if (!email) {
-    //       throw new Error('Email is missing in the request query.');
-    //     }
 
-    //     const result = await userToUser.find({ $or: [{ seller: email }, { buyer: email }] }).toArray();
-
-
-
-
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error('Error:', error.message);
-    //     res.status(500).send('Internal Server Error');
-    //   }
-    // });
-
- 
-
+    //  get message user to user 
     app.get('/getMessageUserToUser', async (req, res) => {
       try {
         const id = req.query.id;
 
-        
+
         if (!id) {
           return res.status(404).send('id not found');
         }
@@ -1217,63 +1480,167 @@ app.get('/userAllChats', async (req, res) => {
 
 
 
-    //Old Books API started by AHAD
+    //Old Books API started by AHAD-----------------------------------
 
+    // app.post("/oldBooks", async (req, res) => {
+    //   const oldBook = req.body;
+    //   // console.log(oldBook);
+    //   const result = await oldBooksCollection.insertOne(oldBook);
+    //   res.send(result);
+    // });
     app.post("/oldBooks", async (req, res) => {
-      const oldBook = req.body;
-      // console.log(oldBook);
-      const result = await oldBooksCollection.insertOne(oldBook);
-      res.send(result);
+      try {
+        const oldBook = req?.body;
+        // console.log(oldBook);
+        const result = await oldBooksCollection.insertOne(oldBook);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error adding old book:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
 
+
+    // app.get("/oldBooks", async (req, res) => {
+    //   const result = await oldBooksCollection.find().toArray();
+    //   res.send(result);
+    // });
     app.get("/oldBooks", async (req, res) => {
-      const result = await oldBooksCollection.find().toArray();
-      res.send(result);
+      try {
+        // Fetch old books from the collection
+        const result = await oldBooksCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error('Error fetching old books:', error);
+        res.status(500).json({ message: 'An error occurred' });
+      }
     });
 
+    // app.get("/oldBook/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const find = { _id: new ObjectId(id) };
+    //   const result = await oldBooksCollection.findOne(find);
+    //   res.send(result);
+    // });
     app.get("/oldBook/:id", async (req, res) => {
-      const id = req.params.id;
-      const find = { _id: new ObjectId(id) };
-      const result = await oldBooksCollection.findOne(find);
-      res.send(result);
+      try {
+        const id = req?.params?.id;
+        const find = { _id: new ObjectId(id) };
+        const result = await oldBooksCollection.findOne(find);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error fetching old book:", error);
+        res.status(500).json({ message: "An error occurred" });
+      }
     });
+
+
+
+    // app.get("/myBooks", async (req, res) => {
+    //   const email = req.query.email;
+    //   console.log("email coming", email);
+    //   const query = { sellerMail: email };
+    //   const result = await oldBooksCollection.find(query).toArray();
+    //   res.send(result);
+    // });
     app.get("/myBooks", async (req, res) => {
-      const email = req.query.email;
-      console.log("email coming", email);
-      const query = { sellerMail: email };
-      const result = await oldBooksCollection.find(query).toArray();
-      res.send(result);
+      try {
+        const email = req?.query?.email;
+        console.log("email coming", email);
+        const query = { sellerMail: email };
+        const result = await oldBooksCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error fetching user's books:", error);
+        res.status(500).json({ message: "An error occurred" });
+      }
     });
+
+    // app.delete("/delete/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await oldBooksCollection.deleteOne(query);
+    //   res.send(result);
+    // });
     app.delete("/delete/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await oldBooksCollection.deleteOne(query);
-      res.send(result);
+      try {
+        const id = req?.params?.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await oldBooksCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error deleting old book:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
 
-    //Old Books API end by AHAD
+
+    //Old Books API end by AHAD----------------------------
 
 
-    //Promo Code Api start by AHAD
+    //Promo Code Api start by AHAD---------------------
+    // app.post("/promo", async (req, res) => {
+    //   const promoCode = req.body;
+    //   // console.log(promoCode);
+    //   const result = await promoCodesCollection.insertOne(promoCode);
+    //   res.send(result);
+    // });
     app.post("/promo", async (req, res) => {
-      const promoCode = req.body;
-      // console.log(promoCode);
-      const result = await promoCodesCollection.insertOne(promoCode);
-      res.send(result);
+      try {
+        const promoCode = req?.body;
+        // console.log(promoCode);
+        const result = await promoCodesCollection.insertOne(promoCode);
+        res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error adding promo code:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
 
+
+    // app.get("/promo", async (req, res) => {
+    //   const result = await promoCodesCollection.find().toArray();
+    //   res.send(result);
+    // });
     app.get("/promo", async (req, res) => {
-      const result = await promoCodesCollection.find().toArray();
-      res.send(result);
+      try {
+        // Fetch promotional codes from the collection
+        const result = await promoCodesCollection.find().toArray();
+        res.json(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error fetching promotional codes:", error);
+        res.status(500).json({ message: "An error occurred" });
+      }
     });
+
+    // app.delete("/promo/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await promoCodesCollection.deleteOne(query);
+    //   res.send(result);
+    // });
     app.delete("/promo/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await promoCodesCollection.deleteOne(query);
-      res.send(result);
+      try {
+          const id = req?.params?.id;
+          const query = { _id: new ObjectId(id) };
+          const result = await promoCodesCollection.deleteOne(query);
+          res.send(result);
+      } catch (error) {
+        // Handle any unexpected errors here
+        console.error("Error deleting promo code:", error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
     });
-    
-    //Promo Code API end by AHAD
+
+
+    //Promo Code API end by AHAD---------------
 
 
 
