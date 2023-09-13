@@ -60,6 +60,7 @@ async function run() {
     const bestSellingAndRecentSelling = database.collection("bestSellingAndRecentSelling");
     const promoCodesCollection = database.collection("promoCodes");
     const userToUser = database.collection("userToUser")
+    const bannersCollection = database.collection("banners")
 
 
     const result = await userToUser.createIndex({ seller: 1, buyer: 1 }, { unique: true });
@@ -123,10 +124,51 @@ async function run() {
 
     // get all books  end by Tonmoy-------------
 
+    // -------nhhasib manage banner
+    app.get("/banners", async (req, res) => {
+      const result = await bannersCollection.find().toArray();
+      console.log(result)
+      res.send(result)
+    })
+
+    app.post("/banners", async (req, res) => {
+      const newBanner = req.body;
+      console.log(newBanner)
+      const result = await bannersCollection.insertOne(newBanner);
+      res.send(result);
+    })
+
+    app.patch("/banner/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const editedBanner = req.body;
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          bannerURL: editedBanner.bannerURL,
+          title: editedBanner.title,
+          subtitle: editedBanner.subtitle
+        }
+      }
+      const result = await bannersCollection.updateOne(query, updatedDoc, options);
+      console.log(result)
+      res.send(result)
+    })
+
+    app.delete("/banner/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bannersCollection.deleteOne(query);
+      console.log(result);
+      res.send(result)
+    })
 
 
 
-    //review api
+    // --------------------nhhasib end
+
+
+    //review api Ahad start ----------------------------------
     app.post('/add-review', async (req, res) => {
       const { bookId, name, photo, rating, review, identifier, postDate } = req.body;
       console.log(bookId);
@@ -160,7 +202,44 @@ async function run() {
       }
     });
 
+    //  review api Ahad end ------------------------------------------
 
+
+
+    //  review for bestSelling and recentSelling Tonmoy start ------------------------------------------
+
+
+    app.post('/recentCellingAndBestCellingReview', async (req, res) => {
+
+      try {
+
+        const { bookId, name, photo, rating, review, identifier, postDate } = req?.body;
+
+      
+
+        const updatedBook = await bestSellingAndRecentSelling.findOneAndUpdate(
+          { previous_id: bookId },
+          { $push: { review: { name, photo, rating, review, identifier, postDate } } },
+          { returnOriginal: false })
+
+          console.log(updatedBook)
+
+        if (!updatedBook.value) {
+          return res.status(404).json({ message: 'Book not found' });
+        }
+
+      
+
+        return res.json({ message: 'Done', book: updatedBook.value });
+      } catch (error) {
+        console.error('Error adding review:', error);
+        return res.status(500).json({ message: 'An error occurred' });
+      }
+
+
+    })
+
+    //  review for bestSelling and recentSelling Tonmoy end ------------------------------------------
 
 
 
@@ -986,6 +1065,8 @@ async function run() {
 
       const info = req.body;
 
+      console.log(info, 'i')
+
       // console.log(info)
 
       const random_id = new ObjectId().toString()
@@ -1038,7 +1119,8 @@ async function run() {
           date: info?.date,
           books: [...info?.books],
           total_price: info?.price,
-          name: info?.name
+          name: info?.name,
+          customer: info?.customer
 
         }
 
@@ -1628,10 +1710,10 @@ async function run() {
     // });
     app.delete("/promo/:id", async (req, res) => {
       try {
-          const id = req?.params?.id;
-          const query = { _id: new ObjectId(id) };
-          const result = await promoCodesCollection.deleteOne(query);
-          res.send(result);
+        const id = req?.params?.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await promoCodesCollection.deleteOne(query);
+        res.send(result);
       } catch (error) {
         // Handle any unexpected errors here
         console.error("Error deleting promo code:", error);
