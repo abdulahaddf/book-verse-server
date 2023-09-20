@@ -92,7 +92,7 @@ async function run() {
 
     app.get("/allBooks", async (req, res) => {
       const { sort, order, page, itemsPerPage, category } = req.query;
-    
+
       const search = req.query.search || "";
       const query = {
         $or: [
@@ -102,13 +102,13 @@ async function run() {
           { category: { $regex: search, $options: "i" } },
         ],
       };
-    
+
       if (category && category !== "default") {
         query.category = category;
       }
-    
+
       let sortOptions = {};
-    
+
       if (sort) {
         if (sort === "real_price") {
           if (order === "asc") {
@@ -124,12 +124,12 @@ async function run() {
           }
         }
       }
-    
+
       const options = {
         skip: (page - 1) * itemsPerPage,
         limit: parseInt(itemsPerPage),
       };
-    
+
       try {
         const result = await allBooksCollections
           .find(query, options)
@@ -138,10 +138,11 @@ async function run() {
         res.json(result);
       } catch (error) {
         console.error("Error fetching books:", error);
-        res.status(500).json({ error: "An error occurred while fetching books." });
+        res
+          .status(500)
+          .json({ error: "An error occurred while fetching books." });
       }
     });
-    
 
     // jwt by nahid end--------------
 
@@ -149,7 +150,7 @@ async function run() {
 
     app.get("/allBooks", async (req, res) => {
       const { sort, order, page, itemsPerPage, category } = req.query;
-    
+
       const search = req.query.search || "";
       const query = {
         $or: [
@@ -159,13 +160,13 @@ async function run() {
           { category: { $regex: search, $options: "i" } },
         ],
       };
-    
+
       if (category && category !== "default") {
         query.category = category;
       }
-    
+
       let sortOptions = {};
-    
+
       if (sort) {
         if (sort === "real_price") {
           if (order === "asc") {
@@ -181,22 +182,23 @@ async function run() {
           }
         }
       }
-    
+
       const options = {
         sort: sortOptions,
         skip: (page - 1) * itemsPerPage,
         limit: parseInt(itemsPerPage),
       };
-    
+
       try {
         const result = await allBooksCollections.find(query, options).toArray();
         res.json(result);
       } catch (error) {
         console.error("Error fetching books:", error);
-        res.status(500).json({ error: "An error occurred while fetching books." });
+        res
+          .status(500)
+          .json({ error: "An error occurred while fetching books." });
       }
     });
-    
 
     //------ get all books  end by Tonmoy and filtering by Zihad-------
 
@@ -832,18 +834,8 @@ async function run() {
         });
 
         const months = [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December",
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         ];
 
         const formattedMonthlyRevenue = monthlyRevenue.map(
@@ -865,18 +857,8 @@ async function run() {
     // daily revenue start by Zihad----------------------------------
 
     const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
     app.get("/dailyRevenue", async (req, res) => {
