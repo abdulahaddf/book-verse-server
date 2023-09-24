@@ -34,7 +34,7 @@ In the frontend, we've utilized React for building interactive user interfaces, 
 ### Multiple Payment Systems:
 
 - Book Verse offers a variety of secure payment options to suit user preferences.
-- SSL Commerce: Ensures secure and encrypted online transactions, providing users with peace of mind.
+- SSLCOMMERZ: Ensures secure and encrypted online transactions, providing users with peace of mind.
 - Stripe Integration: Enables seamless payment processing using international credit or debit cards, enhancing convenience.
 Cash on Delivery (COD): Users have the option to pay in cash upon the delivery of their purchased books, offering flexibility.
 ### User Authentication:
