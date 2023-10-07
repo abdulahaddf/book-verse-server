@@ -308,9 +308,9 @@ const is_live = false; //true for live, false for sandbox
           total_amount: info?.price,
           currency: "BDT",
           tran_id: random_id, // use unique tran_id for each api call
-          success_url: `https://book-verse-server-phi.vercel.app/payment/success/${random_id}`,
-          fail_url: "https://book-verse-server-phi.vercel.app/payment/fail",
-          cancel_url: "https://book-verse-server-phi.vercel.app/payment/cancel",
+          success_url: `https://book-verse-team-project-server.up.railway.app/payment/success/${random_id}`,
+          fail_url: "https://book-verse-team-project-server.up.railway.app/payment/fail",
+          cancel_url: "https://book-verse-team-project-server.up.railway.app/payment/cancel",
           ipn_url: "http://localhost:3030/ipn",
           shipping_method: "Courier",
           product_name: "Computer.",
